@@ -16,8 +16,10 @@ u2=data2.uout(:,2);
 
 
 %kedy step change
-step_indices_1 = find(abs(diff(u1)) > 10);
-step_indices_2 = find(abs(diff(u2)) > 10);
+step_indices_1 = find(abs(diff(u1)) >1);
+step_indices_1 = step_indices_1(2:end);
+step_indices_2 = find(abs(diff(u2)) >= 1);
+step_indices_2 = step_indices_2(2:end-2);
 num_steps = length(step_indices_1) + length(step_indices_2);
 
 %merge
@@ -33,13 +35,6 @@ step_indices = [step_indices_1; step_indices_2]; % combine indices
 max_length = 250;
 x_steps = NaN(num_steps, max_length);
 
-
-%vyhodime posledny skoro nulovy step change
-step_durations = [diff(step_indices); length(t) - step_indices(end)];
-short_step_idx = find(step_durations == 200, 1, 'last'); % Find the last occurrence
-if ~isempty(short_step_idx)
-    step_indices(short_step_idx) = [];
-end
 num_steps = length(step_indices);
 
 figure; hold on;
@@ -54,12 +49,12 @@ for i = 1:num_steps
     if i < num_steps
         end_idx = step_indices(i+1) - 1;
     else
-        end_idx = length(t);
+        end_idx = step_indices(end)+250;
     end
 
     % Extract step response and reset time
-    x_step = x(start_idx:end_idx);
-    t_step = t(start_idx:end_idx) - t(start_idx);
+    x_step = x(start_idx:end_idx)
+    t_step = t(start_idx:end_idx) - t(start_idx);%0-250
     
     % Compute step change (difference in u)
     step_size = u(start_idx+1) - u(start_idx);
@@ -88,6 +83,17 @@ grid on;
 hold off;
 
 
+% priemerna step response
+avg_step = nanmean(x_steps, 1);
+
+
+figure;
+plot(0:max_length-1, avg_step, 'k', 'LineWidth', 2);
+title('Average Normalized Step Response');
+xlabel('Index');
+ylabel('Normalized x');
+grid on;
+
 
 %vektory x,u
 x_min = min(x);
@@ -100,7 +106,12 @@ x_norm = minmax_normalize(x, x_min, x_max);
 u_norm = minmax_normalize(u, u_min, u_max);
 
 
-
+figure;
+plot(x_norm, u_norm);
+title('Normalized Step Response');
+xlabel('Index');
+ylabel('Normalized x');
+grid on;
 
 
 

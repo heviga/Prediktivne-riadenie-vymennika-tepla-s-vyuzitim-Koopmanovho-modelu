@@ -121,6 +121,12 @@ function x_norm = minmax_normalize(x, xmin, xmax)
     x_norm = (x - xmin) / (xmax - xmin);
 end
 
+%% saving data
+Y = x(t+1);
+U = u(t+1);
+
+save("data.mat", 'Y', 'U')
+
 
 
 

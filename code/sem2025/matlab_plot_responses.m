@@ -106,15 +106,6 @@ x_norm = minmax_normalize(x, x_min, x_max);
 u_norm = minmax_normalize(u, u_min, u_max);
 
 
-figure;
-plot(x_norm, u_norm);
-title('Normalized Step Response');
-xlabel('Index');
-ylabel('Normalized x');
-grid on;
-
-
-
 
 %% scaling vektorov
 function x_norm = minmax_normalize(x, xmin, xmax)

@@ -25,7 +25,7 @@ num_steps = length(step_indices_1) + length(step_indices_2);
 %merge
 t = [t1; t2]; 
 x = [T4_1; T4_2]; %T4
-u = [u1; u2];
+u = [u1; u2];%
 
 %merged step indices
 step_indices_2 = step_indices_2 + length(t1); % shift step casy druheho merania
@@ -105,18 +105,18 @@ u_max = max(u);
 x_norm = minmax_normalize(x, x_min, x_max);
 u_norm = minmax_normalize(u, u_min, u_max);
 
+%% saving data
+Y = x(t+1);
+U = u(t+1);
 
+save("data.mat", 'Y', 'U')
 
 %% scaling vektorov
 function x_norm = minmax_normalize(x, xmin, xmax)
     x_norm = (x - xmin) / (xmax - xmin);
 end
 
-%% saving data
-Y = x(t+1);
-U = u(t+1);
 
-save("data.mat", 'Y', 'U')
 
 
 

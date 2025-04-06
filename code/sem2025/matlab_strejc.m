@@ -78,7 +78,7 @@ objective = 0;
 
 for k = 1:N
     % Dynamics constraint
-    constraints = [constraints, x{k+1} == A*x{k} + B*u{k}];
+    constraints = [constraints, x{k+1} == A*x{k} + B*u{k}];%cista predikcia
 
     % Input constraint
     constraints = [constraints, umin <= u{k} <= umax];
@@ -98,7 +98,7 @@ controller = optimizer(constraints, objective, options, x0, u{1});
 % Simulation
 sim_steps = length(u_scaled_test);
 
-x_strejc = zeros(nx, sim_steps+1);
+x_strejc = zeros(nx, sim_steps+1);%nejake z0
 y_strejc = zeros(ny, sim_steps+1);
 
 x_sim(:,1) = x_scaled(1); % Initial condition

@@ -6,7 +6,7 @@
 % MATLAB std(u): 27.6293198476
 
 %% Load Koopman model matrices
-A = readNPY('data/A_wC.npy');
+A = readNPY('data/A_wC.npy');%neulozila som ako.m
 B = readNPY('data/B_wC.npy');
 C = readNPY('data/C_wC.npy');
 D = 0;

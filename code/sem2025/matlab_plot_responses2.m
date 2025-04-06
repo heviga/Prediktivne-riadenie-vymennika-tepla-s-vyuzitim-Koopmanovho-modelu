@@ -50,15 +50,15 @@ title('druhe meranie');
 Ytrain=x1(t1+1);
 Utrain=u1(t1+1);
 % save("train_data.mat", 'Ytrain', 'Utrain')
-save("train_data.mat", 'Y', 'U')
-save("train_data_ident.mat", 'Ytrain', 'Utrain')
-
+% save("train_data.mat", 'Y', 'U')
+% save("train_data_ident.mat", 'Ytrain', 'Utrain')
+% 
 
 Ytest=x2(t2+1);
 Utest=u2(t2+1);
 % save("test_data.mat", 'Ytest', 'Utest')
-save("test_data.mat", 'Y', 'U')
-save("test_data_ident.mat", 'Ytest', 'Utest')
+% save("test_data.mat", 'Y', 'U')
+% save("test_data_ident.mat", 'Ytest', 'Utest')
 
 
 % Y = x(t+1);
@@ -100,7 +100,7 @@ for i = 1:num_steps
     end
 
     % Extract step response and reset time
-    x_step = x(start_idx:end_idx)
+    x_step = x(start_idx:end_idx);
     t_step = t(start_idx:end_idx) - t(start_idx);%0-250
     
     % Compute step change (difference in u)
@@ -119,6 +119,8 @@ for i = 1:num_steps
     x_steps(i, 1:len) = x_norm(1:len);
 
     % Plot each step response
+    disp(['Step ', num2str(i), ': Δu = ', num2str(step_size)]);
+
     plot(0:len-1, x_steps(i, 1:len), 'Color', colors(i,:));
 end
 
@@ -139,6 +141,23 @@ xlabel('Index');
 ylabel('Normalized x');
 grid on;
 
+% === Compute gain K and time constant tau ===
+K = mean(avg_step(end-5:end));           % Steady-state gain
+target_value = 0.632 * K;                % 63.2% of K for first-order system
+
+% Find index where the average response reaches or exceeds 63.2% of K
+tau_idx = find(avg_step >= target_value, 1, 'first');
+
+fprintf('Steady-state gain K ≈ %.4f\n', K);
+fprintf('Time constant (tau) ≈ %d samples\n', tau_idx);
+
+% Optional: plot tau visually
+hold on;
+yline(K, '--', 'K');
+yline(target_value, '--', '63.2% of K');
+xline(tau_idx, '--r', 'tau');
+legend('Average Response', 'K', '63.2% of K', 'tau');
+hold off;
 
 
 

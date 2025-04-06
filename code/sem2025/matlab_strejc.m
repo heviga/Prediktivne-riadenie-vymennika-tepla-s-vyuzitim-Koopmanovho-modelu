@@ -15,25 +15,35 @@
 
 %#ucka potrebujeme descalovat u = u_scaled * u_std + u_mean;
 
-load('data/scaled_data.mat')
-load('data/unscaled_data.mat')
+load('train_data_ident.mat');  % Ytrain, Utrain (unscaled)
+load('test_data_ident.mat');
 
-u_scaled = u_scaled(:); 
-x_scaled = x_scaled(:); 
+Ytrain = Ytrain(:);
+Utrain = Utrain(:);
+Ytest = Ytest(:);
+Utest = Utest(:);
 
-x_mean = 58.3152398;
-x_std = 9.07091605;
+x_mean = mean(Ytrain);
+x_std = std(Ytrain);
+u_mean = mean(Utrain);
+u_std = std(Utrain);
 
-u_mean = 54.6108889572;
-u_std = 27.6293198476;
+% Scale test data
+x_scaled_test = (Ytest - x_mean) / x_std;
+u_scaled_test = (Utest - u_mean) / u_std;
+% x_mean = 58.3152398;
+% x_std = 9.07091605;
+% 
+% u_mean = 54.6108889572;
+% u_std = 27.6293198476;
 
 
 %% 1. strejc a mpc na strejca 
 % tiez ho naskalovat najprv
 
 % Discrete-time Strejc model
-A = 0.9770;
-B = 0.0319;
+A = 0.97701252;
+B = 0.03150894;
 C = 1;
 D = 0;
 
@@ -42,7 +52,6 @@ nx = 1;             % Number of states
 nu = 1;             % Number of inputs
 ny = 1;             % Number of outputs
 
-sim_steps = length(x_scaled);
 %% yalmip
 % Horizon
 N = 20;
@@ -87,42 +96,42 @@ controller = optimizer(constraints, objective, options, x0, u{1});
 
 %%
 % Simulation
-sim_steps = length(x_scaled);
-x_sim = zeros(nx, sim_steps+1);
-u_sim = zeros(nu, sim_steps);
-y_sim = zeros(ny, sim_steps+1);
+sim_steps = length(u_scaled_test);
+
+x_strejc = zeros(nx, sim_steps+1);
+y_strejc = zeros(ny, sim_steps+1);
 
 x_sim(:,1) = x_scaled(1); % Initial condition
 y_sim(:,1) = C * x_sim(:,1);
 
+% Initial condition from test data
+x_strejc(:,1) = x_scaled_test(1);
+y_strejc(:,1) = C * x_strejc(:,1);
+
 for t = 1:sim_steps
-    % Get optimal input
-    u_opt = controller{x_sim(:,t)};
-    u_sim(:,t) = u_opt;
-
-    % Apply input to system
-    x_sim(:,t+1) = A * x_sim(:,t) + B * u_sim(:,t);
-    y_sim(:,t+1) = C * x_sim(:,t+1);
+    x_strejc(:,t+1) = A * x_strejc(:,t) + B * u_scaled_test(t);
+    y_strejc(:,t+1) = C * x_strejc(:,t+1);
 end
+
 %% plot
-
-u_descaled = u_sim * u_std + u_mean;
-y_descaled = y_sim * x_std + x_mean;
-
+u_descaled = u_scaled_test * u_std + u_mean;
+y_descaled = y_strejc * x_std + x_mean;
 time = 0:sim_steps;
 
 figure;
 subplot(2,1,1)
-plot(time, y_descaled, 'LineWidth', 2);
-hold on; yline(x_mean + x_std * r, '--r', 'Setpoint'); %x_mean + x_std * r
-ylabel('Output y'); grid on; title('MPC Response - descaled');
-ylim([40 80])
-xlim([0 length(y_descaled)])
+plot(time, y_descaled, 'LineWidth', 2); % Koopman prediction (or Strejc)
+hold on;
+plot(time(1:end-1), Ytest, '--k', 'LineWidth', 1.5); % Ground truth
+xlabel('Time step'); ylabel('Output y (°C)');
+legend('Strejc Predicted', 'True Test Output');
+title('Strejc Model Prediction (Test Data)');
+grid on;
 
 subplot(2,1,2)
-stairs(0:sim_steps-1, u_descaled, 'LineWidth', 2);
-ylabel('Input u'); xlabel('Time step'); grid on;
-xlim([0 length(y_descaled)])
-
+stairs(time(1:end-1), u_descaled, 'LineWidth', 2);
+xlabel('Time step'); ylabel('Input u');
+title('Test Input (Descaled)');
+grid on;
 
 %%

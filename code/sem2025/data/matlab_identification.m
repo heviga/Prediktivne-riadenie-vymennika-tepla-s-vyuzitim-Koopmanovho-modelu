@@ -1,3 +1,4 @@
+%% scaled
 clc; clear; close all;
 
 % === Load and preprocess ===
@@ -25,12 +26,23 @@ u = [u1; u2];      % full input
 t = [t1; t2];      % full time
 
 % === Apply StandardScaler logic ===
-x_mean = mean(x);    x_std = std(x);
-u_mean = mean(u);    u_std = std(u);
+% x_mean = mean(x);    x_std = std(x);
+% u_mean = mean(u);    u_std = std(u);
+% 
+% x_scaled = (x - x_mean) / x_std;
+% u_scaled = (u - u_mean) / u_std;
 
+% === Apply StandardScaler logic LEN NA TRAINING DATA AKO V PYTHONE===
+x_mean = mean(T4_1);
+x_std = std(T4_1);
 x_scaled = (x - x_mean) / x_std;
+
+u_mean = mean(u1);
+u_std = std(u1);
 u_scaled = (u - u_mean) / u_std;
 
+% save('scaled_data.mat', 'x_scaled', 'u_scaled')
+%save('unscaled_data.mat', 'x', 'u')
 % === Detect step indices ===
 step_indices_1 = find(abs(diff(u1)) > 1);
 step_indices_2 = find(abs(diff(u2)) > 1) + length(u1);
@@ -93,16 +105,17 @@ fprintf('Time constant τ ≈ %d samples\n', tau_idx);
 
 
 % Compute StandardScaler-style stats
-x_mean = mean(x);
-x_std = std(x);
-x_scaled = (x - x_mean) / x_std;
-
-u_mean = mean(u);
-u_std = std(u);
-u_scaled = (u - u_mean) / u_std;
+% x_mean = mean(x);
+% x_std = std(x);
+% x_scaled = (x - x_mean) / x_std;
+% 
+% u_mean = mean(u);
+% u_std = std(u);
+% u_scaled = (u - u_mean) / u_std;
 
 % Confirm post-scaling stats
-fprintf('MATLAB x_scaled mean = %.4f, std = %.4f\n', mean(x_scaled), std(x_scaled));
-fprintf('MATLAB u_scaled mean = %.4f, std = %.4f\n', mean(u_scaled), std(u_scaled));
-
+fprintf("MATLAB mean(x): %.10f\n", x_mean);
+fprintf("MATLAB std(x): %.10f\n", x_std);
+fprintf("MATLAB mean(u): %.10f\n", u_mean);
+fprintf("MATLAB std(u): %.10f\n", u_std);
 

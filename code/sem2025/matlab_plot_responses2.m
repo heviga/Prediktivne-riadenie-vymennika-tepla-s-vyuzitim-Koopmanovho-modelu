@@ -1,3 +1,5 @@
+%% unscaled
+
 %% load data
 clc,close all
 data1 = load('ident_data_1.mat')
@@ -150,6 +152,7 @@ tau_idx = find(avg_step >= target_value, 1, 'first');
 
 fprintf('Steady-state gain K ≈ %.4f\n', K);
 fprintf('Time constant (tau) ≈ %d samples\n', tau_idx);
+
 
 % Optional: plot tau visually
 hold on;

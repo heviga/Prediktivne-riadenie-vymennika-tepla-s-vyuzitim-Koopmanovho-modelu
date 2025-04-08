@@ -25,7 +25,7 @@ x = [T4_1; T4_2];  % full output
 u = [u1; u2];      % full input
 t = [t1; t2];      % full time
 
-% === Apply StandardScaler logic ===
+% === Apply StandardScaler logic === CELY DATASET
 % x_mean = mean(x);    x_std = std(x);
 % u_mean = mean(u);    u_std = std(u);
 % 

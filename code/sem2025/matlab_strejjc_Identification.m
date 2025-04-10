@@ -23,14 +23,18 @@ Utrain = Utrain(:);
 Ytest = Ytest(:);
 Utest = Utest(:);
 
-x_mean = mean(Ytrain);
-x_std = std(Ytrain);
-u_mean = mean(Utrain);
-u_std = std(Utrain);
+Yall = [Ytrain; Ytest];
+Uall = [Utrain; Utest];
+
+x_mean = mean(Yall);
+x_std = std(Yall);
+u_mean = mean(Uall);
+u_std = std(Uall);
 
 % Scale test data
 x_scaled_test = (Ytest - x_mean) / x_std;
 u_scaled_test = (Utest - u_mean) / u_std;
+
 % x_mean = 58.3152398;
 % x_std = 9.07091605;
 % 
@@ -62,7 +66,7 @@ x = sdpvar(repmat(nx,1,N+1), repmat(1,1,N+1));
 
 % Parameters
 x0 = sdpvar(nx,1);   % Initial condition
-r = 1;               % Setpoint
+r = (70 - x_mean) / x_std;               % Setpoint
 
 % Cost weights
 Qy = 10;
@@ -95,43 +99,62 @@ options = sdpsettings('verbose', 0, 'solver', 'quadprog');
 controller = optimizer(constraints, objective, options, x0, u{1});
 
 %%
-% Simulation
+% Simulation open loop
 sim_steps = length(u_scaled_test);
 
-x_strejc = zeros(nx, sim_steps+1);%nejake z0
-y_strejc = zeros(ny, sim_steps+1);
+x_open = zeros(nx, sim_steps+1);
+y_open = zeros(ny, sim_steps+1);
 
-x_sim(:,1) = x_scaled(1); % Initial condition
-y_sim(:,1) = C * x_sim(:,1);
-
-% Initial condition from test data
-x_strejc(:,1) = x_scaled_test(1);
-y_strejc(:,1) = C * x_strejc(:,1);
+x_open(:,1) = x_scaled_test(1);
+y_open(:,1) = C * x_open(:,1);
 
 for t = 1:sim_steps
-    x_strejc(:,t+1) = A * x_strejc(:,t) + B * u_scaled_test(t);
-    y_strejc(:,t+1) = C * x_strejc(:,t+1);
+    x_open(:,t+1) = A * x_open(:,t) + B * u_scaled_test(t);
+    y_open(:,t+1) = C * x_open(:,t+1);
 end
 
+
+%% Closed-loop MPC simulation
+x_mpc = zeros(nx, sim_steps+1);
+y_mpc = zeros(ny, sim_steps+1);
+u_mpc = zeros(nu, sim_steps);
+x_mpc(:,1) = x_scaled_test(1);% initial
+
+
+for t = 1:sim_steps
+    u_mpc(:,t) = controller{x_mpc(:,t)};
+    x_mpc(:,t+1) = A * x_mpc(:,t) + B * u_mpc(:,t);
+    y_mpc(:,t+1) = C * x_mpc(:,t+1);
+end
+
+%% Descale
+time = 0:sim_steps;
+u_open_desc = u_scaled_test * u_std + u_mean;
+y_open_desc = y_open * x_std + x_mean;
+u_mpc_desc = u_mpc * u_std + u_mean;
+y_mpc_desc = y_mpc * x_std + x_mean;
+y_true = Ytest;
+
+
 %% plot
-u_descaled = u_scaled_test * u_std + u_mean;
-y_descaled = y_strejc * x_std + x_mean;
 time = 0:sim_steps;
 
 figure;
 subplot(2,1,1)
-plot(time, y_descaled, 'LineWidth', 2); % Koopman prediction (or Strejc)
-hold on;
-plot(time(1:end-1), Ytest, '--k', 'LineWidth', 1.5); % Ground truth
+plot(time, y_open_desc, 'b-', 'LineWidth', 2); hold on;
+plot(time, y_mpc_desc, 'm--', 'LineWidth', 2);
+plot(time(1:end-1), y_true, 'k:', 'LineWidth', 1.5);
 xlabel('Time step'); ylabel('Output y (°C)');
-legend('Strejc Predicted', 'True Test Output');
-title('Strejc Model Prediction (Test Data)');
+legend('Open-loop (Strejc)', 'Closed-loop (MPC)', 'True Output');
+title('Output comparison');
 grid on;
 
 subplot(2,1,2)
-stairs(time(1:end-1), u_descaled, 'LineWidth', 2);
+stairs(time(1:end-1), u_open_desc, 'r-', 'LineWidth', 2); hold on;
+stairs(time(1:end-1), u_mpc_desc, 'k--', 'LineWidth', 2);
 xlabel('Time step'); ylabel('Input u');
-title('Test Input (Descaled)');
-grid on;
+legend('Open-loop Input', 'MPC Input');
+title('Input Comparison');
+grid on; grid minor;
 
 %%

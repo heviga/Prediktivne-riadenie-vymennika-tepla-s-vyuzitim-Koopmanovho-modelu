@@ -175,4 +175,14 @@ grid on; grid minor;
 
 %vykreslit riadenie do ss, 
 
+%% RMSE Calculation (to reference setpoint)
+y_ref = ones(size(y_desc)) * 60;       % reference output in °C
+rmse_open = sqrt(mean((y_desc - y_ref).^2));
+rmse_cl   = sqrt(mean((y_mpc_desc - y_ref).^2));
+
+fprintf('RMSE (Open-loop)  = %.4f °C\n', rmse_open);
+fprintf('RMSE (Closed-loop) = %.4f °C\n', rmse_cl);
+
+save('results_strejc.mat', 'y_mpc_desc', 'u_mpc_desc');  % From Strejc
+
 %%

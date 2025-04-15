@@ -1,4 +1,4 @@
-clc,clear all,close all
+clc,clear all,%close all
 % Load Koopman model matrices
 A = double(readNPY('data/A_wC_all.npy'));
 B = double(readNPY('data/B_wC_all.npy'));
@@ -56,10 +56,13 @@ N = 40;
 
 umin = (20 - u_mean) / u_std;
 umax = (100 - u_mean) / u_std;
-ymin = (20 - x_mean) / x_std;
+% ymin = (20 - x_mean) / x_std;
+ymin = (0 - x_mean) / x_std;
 ymax = (70 - x_mean) / x_std;
 
-r = (60 - x_mean) / x_std;  % Setpoint
+%r = (60 - x_mean) / x_std;  % Setpoint
+r = (0 - x_mean) / x_std;   %  0 °C 
+
 
 % YALMIP setup
 u = sdpvar(repmat(1,1,N), repmat(1,1,N));
@@ -114,3 +117,17 @@ xlabel('Time step'); ylabel('Input u');
 legend('Open-loop input (test)', 'MPC control input');
 title('Input Comparison');
 grid on; grid minor;
+
+%% RMSE Calculation
+e_open = y_open_desc(1:end-1) - Ytest(:);
+e_cl   = y_cl_desc(1:end-1) - Ytest(:);
+
+rmse_open = sqrt(mean(e_open(:).^2));
+rmse_cl   = sqrt(mean(e_cl(:).^2));
+
+fprintf('RMSE (Open-loop)  = %.4f\n', rmse_open);% stupen celzia
+fprintf('RMSE (Closed-loop) = %.4f\n', rmse_cl);
+
+
+save('results_koopman.mat', 'y_cl_desc', 'u_cl_desc');   % From Koopman
+

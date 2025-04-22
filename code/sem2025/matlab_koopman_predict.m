@@ -4,7 +4,7 @@
 
 % MATLAB mean(u): 54.6108889572
 % MATLAB std(u): 27.6293198476
-
+clear all, %close all
 %% Load Koopman model matrices
 A = readNPY('data/A_wC_all.npy');%neulozila som ako.m
 B = readNPY('data/B_wC_all.npy');
@@ -79,3 +79,5 @@ ylabel('Input u');
 title('Original Input (Test Data)');
 grid on;
 
+save('koopman_open_loop_comparison.mat', ...
+    'y_koopman_desc', 'Ytest', 'time', 'Utest');

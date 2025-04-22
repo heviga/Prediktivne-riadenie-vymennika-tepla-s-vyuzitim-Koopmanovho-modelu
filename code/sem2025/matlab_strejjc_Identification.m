@@ -14,7 +14,9 @@
 % Discrete D matrix: [[0]]
 
 %#ucka potrebujeme descalovat u = u_scaled * u_std + u_mean;
-
+%% 
+close all, clear all
+%%
 load('train_data_ident.mat');  % Ytrain, Utrain (unscaled)
 load('test_data_ident.mat');
 
@@ -58,7 +60,7 @@ ny = 1;             % Number of outputs
 
 %% yalmip
 % Horizon
-N = 20;
+N = 40;
 
 % Variables
 u = sdpvar(repmat(nu,1,N), repmat(1,1,N));
@@ -141,20 +143,21 @@ time = 0:sim_steps;
 
 figure;
 subplot(2,1,1)
-plot(time, y_open_desc, 'b-', 'LineWidth', 2); hold on;
-plot(time, y_mpc_desc, 'm--', 'LineWidth', 2);
+plot(time, y_open_desc, 'b-', 'LineWidth', 2); hold on
 plot(time(1:end-1), y_true, 'k:', 'LineWidth', 1.5);
 xlabel('Time step'); ylabel('Output y (°C)');
-legend('Open-loop (Strejc)', 'Closed-loop (MPC)', 'True Output');
+legend('Open-loop (Strejc)', 'True Output');
 title('Output comparison');
 grid on;
 
 subplot(2,1,2)
 stairs(time(1:end-1), u_open_desc, 'r-', 'LineWidth', 2); hold on;
-stairs(time(1:end-1), u_mpc_desc, 'k--', 'LineWidth', 2);
 xlabel('Time step'); ylabel('Input u');
-legend('Open-loop Input', 'MPC Input');
+legend('Open-loop Input');
 title('Input Comparison');
 grid on; grid minor;
 
 %%
+%% Save for later plotting
+save('strejc_open_loop_comparison_data.mat', ...
+    'y_open_desc', 'y_true', 'time', 'u_open_desc');

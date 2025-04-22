@@ -1,5 +1,5 @@
 clc; clear; close all;
-
+%%
 % Load results
 load('results_koopman.mat', 'y_cl_desc', 'u_cl_desc');
 y_koop = y_cl_desc(:);
@@ -56,4 +56,52 @@ stairs(time(1:end-1), u_koop, 'm--', 'LineWidth', 2);
 xlabel('Time step'); ylabel('Input u');
 legend('MPC Strejc', 'MPC Koopman');
 title('Control Input Comparison');
+grid on;
+
+
+%% --- Open-loop Identification Comparison ---
+% Load Strejc data
+load('strejc_open_loop_comparison_data.mat', ...
+    'y_open_desc', 'y_true', 'time', 'u_open_desc');
+
+y_true = y_true(:);
+y_open_strejc = y_open_desc(:);
+
+
+% Load Koopman data
+load('koopman_open_loop_comparison.mat', ...
+    'y_koopman_desc');
+
+y_open_koopman = y_koopman_desc(:);
+
+y_open_strejc = y_open_strejc(2:end);
+y_open_koopman = y_open_koopman(2:end);
+y_open_desc = y_open_desc(1:end-1);
+time = time(1:end-1);
+
+% Compute RMSE (against the same y_true)
+rmse_open_strejc = sqrt(mean((y_open_strejc - y_true).^2));
+rmse_open_koopman = sqrt(mean((y_open_koopman - y_true).^2));
+
+% Display RMSE
+fprintf('\n--- Open-loop Prediction RMSE ---\n');
+fprintf('RMSE (Open-loop Strejc)   = %.4f °C\n', rmse_open_strejc);
+fprintf('RMSE (Open-loop Koopman)  = %.4f °C\n', rmse_open_koopman);
+
+% Plot Open-loop Output Comparison
+figure;
+subplot(2,1,1)
+plot(time, y_true, 'k:', 'LineWidth', 1.5); hold on;
+plot(time, y_open_strejc, 'b-', 'LineWidth', 2);
+plot(time, y_open_koopman, 'm--', 'LineWidth', 2);
+xlabel('Time step'); ylabel('Output y (°C)');
+legend('True Output', 'Strejc Prediction', 'Koopman Prediction');
+title('Open-loop Output Comparison');
+grid on;
+
+subplot(2,1,2)
+stairs(time, u_open_desc, 'b', 'LineWidth', 2); hold on;
+xlabel('Time step'); ylabel('Input u');
+legend('True Input');
+title('Open-loop Input Comparison');
 grid on;

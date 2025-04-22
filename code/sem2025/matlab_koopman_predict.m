@@ -78,6 +78,6 @@ xlabel('Time step');
 ylabel('Input u');
 title('Original Input (Test Data)');
 grid on;
-
-save('koopman_open_loop_comparison.mat', ...
-    'y_koopman_desc', 'Ytest', 'time', 'Utest');
+%%
+% save('koopman_open_loop_comparison.mat', ...
+%     'y_koopman_desc', 'Ytest', 'time', 'Utest');

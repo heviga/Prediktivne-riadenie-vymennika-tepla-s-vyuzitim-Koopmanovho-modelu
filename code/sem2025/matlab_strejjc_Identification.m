@@ -15,7 +15,8 @@
 
 %#ucka potrebujeme descalovat u = u_scaled * u_std + u_mean;
 %% 
-close all, clear all
+%close all, 
+clear all
 %%
 load('train_data_ident.mat');  % Ytrain, Utrain (unscaled)
 load('test_data_ident.mat');
@@ -159,5 +160,5 @@ grid on; grid minor;
 
 %%
 %% Save for later plotting
-save('strejc_open_loop_comparison_data.mat', ...
-    'y_open_desc', 'y_true', 'time', 'u_open_desc');
+%save('strejc_open_loop_comparison_data.mat', ...
+%    'y_open_desc', 'y_true', 'time', 'u_open_desc');

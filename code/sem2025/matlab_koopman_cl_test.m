@@ -32,6 +32,10 @@ u_std = std(Uall);
 Ytest_scaled = (Ytest - x_mean) / x_std;
 Utest_scaled = (Utest - u_mean) / u_std;
 
+A = 0.97701252;
+B = 0.03150894;
+C = 1;
+D = 0;
 %% Open-loop Koopman rollout (using Utest)
 sim_length = length(Utest_scaled);
 nx = size(A,1);
@@ -57,7 +61,7 @@ u_test_desc = Utest_scaled * u_std + u_mean;
 
 %% Closed-loop Koopman control (MPC)
 Qy = 10;
-Qu = 100;
+Qu = 1;
 N = 40;
 
 sim_length = 100;

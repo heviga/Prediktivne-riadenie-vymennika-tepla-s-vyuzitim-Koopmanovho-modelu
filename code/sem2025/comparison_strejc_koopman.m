@@ -21,8 +21,8 @@ y_sum_koop = sum(abs(y_koop));
 y_sum_strejc = sum(abs(y_strejc));
 
 % Optional: error to 0°C
-e_koop = y_koop;  % reference = 0
-e_strejc = y_strejc;
+e_koop = y_koop -59.3995;  % reference = 0
+e_strejc = y_strejc - 59.3995;
 
 e_sum_koop = sum(abs(e_koop));
 e_sum_strejc = sum(abs(e_strejc));

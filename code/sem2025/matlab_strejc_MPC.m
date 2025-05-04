@@ -29,7 +29,7 @@ nx = 1;
 ny = 1;
 nu = 1;
 Ts = 1;
-sim_length = 100;
+sim_length = 150;
 
 % Scale initial condition
 x0 = (65 - x_mean) / x_std;   % Start from 50°C
@@ -84,7 +84,6 @@ u_cl_desc = u_cl * u_std + u_mean;
 
 %% --- Plot closed-loop only ---
 time = 0:sim_length;
-
 figure;
 subplot(2,1,1)
 plot(time, y_cl_desc, 'm--', 'LineWidth', 2); hold on

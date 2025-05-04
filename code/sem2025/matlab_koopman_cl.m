@@ -60,7 +60,7 @@ Qy = 10;
 Qu = 100;
 N = 40;
 
-sim_length = 100;
+sim_length = 150;
 umin = (20 - u_mean) / u_std;
 umax = (100 - u_mean) / u_std;
 % ymin = (20 - x_mean) / x_std;

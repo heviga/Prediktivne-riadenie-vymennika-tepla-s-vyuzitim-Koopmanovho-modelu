@@ -4,10 +4,12 @@ clc; clear; close all;
 load('results_koopman.mat', 'y_cl_desc', 'u_cl_desc');
 y_koop = y_cl_desc(:);
 u_koop = u_cl_desc(:);
+koopman_last_u = u_cl_desc(end)
 
 load('results_strejc_to_zero.mat', 'y_cl_desc', 'u_cl_desc');
 y_strejc = y_cl_desc(:);
 u_strejc = u_cl_desc(:);
+strejc_last_u = u_cl_desc(end)
 
 sim_length = length(y_koop) - 1;
 time = 0:sim_length;
@@ -48,7 +50,7 @@ xlabel('Time step'); ylabel('Output y (°C)');
 legend('MPC Strejc', 'MPC Koopman');
 title('Closed-loop Output: Strejc vs Koopman');
 grid on;
-ylim([45 65])
+% ylim([45 65])
 
 subplot(2,1,2)
 stairs(time(1:end-1), u_strejc, 'b-', 'LineWidth', 2); hold on;

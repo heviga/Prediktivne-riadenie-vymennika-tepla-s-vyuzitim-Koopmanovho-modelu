@@ -36,7 +36,7 @@ x0 = (50 - x_mean) / x_std;   % Start from 50°C
 
 %% --- MPC setup for control to 0°C ---
 Qy = 10;
-Ru = 1;
+Qu = 1;
 N = 40;
 
 r = (0 - x_mean) / x_std;   % Setpoint = 0°C (scaled)
@@ -58,7 +58,7 @@ for k = 1:N
     constraints = [constraints, umin <= u{k} <= umax];
     yk = C * x{k};
     constraints = [constraints, ymin <= yk <= ymax];
-    objective = objective + Qy*(yk)^2 + Ru*u{k}^2;  % Control to 0
+    objective = objective + Qy*(yk)^2 + Qu*u{k}^2;  % Control to 0
 end
 
 controller = optimizer(constraints, objective, sdpsettings('solver','quadprog'), x0_param, u{1});

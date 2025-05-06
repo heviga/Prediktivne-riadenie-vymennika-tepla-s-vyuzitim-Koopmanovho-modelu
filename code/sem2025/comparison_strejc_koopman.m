@@ -1,10 +1,15 @@
 clc; clear; close all;
 %%
 % Load results
-load('results_koopman.mat', 'y_cl_desc', 'u_cl_desc');
+load('results_koopman.mat', 'y_cl_desc', 'u_cl_desc','x_mean','u_mean');
 y_koop = y_cl_desc(:);
 u_koop = u_cl_desc(:);
 koopman_last_u = u_cl_desc(end)
+x_mean=x_mean(:);
+x_std = 8.2880;
+
+u_std = 26.3513;
+
 
 load('results_strejc_to_zero.mat', 'y_cl_desc', 'u_cl_desc');
 y_strejc = y_cl_desc(:);
@@ -15,28 +20,54 @@ sim_length = length(y_koop) - 1;
 time = 0:sim_length;
 
 % Control effort (sum of absolute values)
-effort_koop = sum(abs(u_koop));
-effort_strejc = sum(abs(u_strejc));
+effort_koop = sum(abs(u_koop).^2);
+effort_strejc = sum(abs(u_strejc).^2);
 
 % Output magnitude
 y_sum_koop = sum(abs(y_koop));
 y_sum_strejc = sum(abs(y_strejc));
 
 % Optional: error to 0°C
-e_koop = y_koop -59.3995;  % reference = 0
-e_strejc = y_strejc - 59.3995;
+e_koop = y_koop -x_mean;  % reference = 0
+e_strejc = y_strejc - x_mean;
 
 e_sum_koop = sum(abs(e_koop));
 e_sum_strejc = sum(abs(e_strejc));
 
+e_koop_u = u_koop -u_mean;  % reference = 0
+e_strejc_u = u_strejc - u_mean;
+
+e_sum_koop_u = sum(abs(e_koop_u));
+e_sum_strejc_u = sum(abs(e_strejc_u));
+
 rmse_koop = sqrt(mean((y_koop).^2));
 rmse_strejc = sqrt(mean((y_strejc).^2));
+
+%obj value
+Qy = 10;
+Qu = 1;
+
+obj_strejc=0;
+obj_koop=0;
+y_koop_scaled = (y_koop - x_mean) / x_std;
+u_koop_scaled = (u_koop - u_mean) / u_std;
+y_strej_scaled = (y_strejc - x_mean) / x_std;
+u_strejc_scaled = (u_strejc - u_mean) / u_std;
+for i=1:sim_length
+    obj_koop = obj_koop + Qy*(y_koop_scaled(i))^2 + Qu*u_koop_scaled(i)^2; 
+    obj_strejc= obj_strejc + Qy*(y_strej_scaled(i))^2 + Qu*u_strejc_scaled(i)^2; 
+end
+
+
 
 % Print comparison
 fprintf('\n--- MPC Comparison ---\n');
 fprintf('Sum |u|     Koopman: %.2f \t Strejc: %.2f\n', effort_koop, effort_strejc);
-fprintf('Sum |y|     Koopman: %.2f \t Strejc: %.2f\n', y_sum_koop, y_sum_strejc);
+%fprintf('Sum |y|     Koopman: %.2f \t Strejc: %.2f\n', y_sum_koop, y_sum_strejc);
 fprintf('Sum |e|     Koopman: %.2f \t Strejc: %.2f\n', e_sum_koop, e_sum_strejc);
+
+fprintf('Sum |e_u |     Koopman: %.2f \t Strejc: %.2f\n', e_sum_koop_u, e_sum_strejc_u);
+
 
 fprintf('RMSE (MPC Strejc vs 60 °C)   = %.4f\n', rmse_strejc);
 fprintf('RMSE (MPC Koopman vs 60 °C)  = %.4f\n', rmse_koop);

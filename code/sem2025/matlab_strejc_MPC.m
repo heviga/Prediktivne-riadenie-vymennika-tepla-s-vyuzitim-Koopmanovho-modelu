@@ -32,7 +32,7 @@ Ts = 1;
 sim_length = 150;
 
 % Scale initial condition
-x0 = (65 - x_mean) / x_std;   % Start from 50°C
+x0 = (50 - x_mean) / x_std;   % Start from 50°C
 
 %% --- MPC setup for control to 0°C ---
 Qy = 10;
@@ -92,7 +92,7 @@ xlabel('Time step'); ylabel('Output y (°C)');
 legend('MPC Output');
 title('Strejc Closed-loop ');
 grid on;grid minor;
-ylim([50 70])
+ylim([40 70])
 
 subplot(2,1,2)
 stairs(time(1:end-1), u_cl_desc, 'k--', 'LineWidth', 2);

@@ -38,7 +38,7 @@ nx = size(A,1);
 ny = 1;
 
 x0 = zeros(nx,1); x0(1) = Ytest_scaled(1);%z0
-y0 = (65 - x_mean) / x_std;
+y0 = (50 - x_mean) / x_std;
 x0 = pinv(C)*y0;
 
 x_open = zeros(nx, sim_length+1);
@@ -57,7 +57,7 @@ u_test_desc = Utest_scaled * u_std + u_mean;
 
 %% Closed-loop Koopman control (MPC)
 Qy = 10;
-Qu = 100;
+Qu = 1;
 N = 40;
 
 sim_length = 150;
@@ -141,5 +141,5 @@ fprintf('RMSE (Open-loop)  = %.4f\n', rmse_open);% stupen celzia
 fprintf('RMSE (Closed-loop) = %.4f\n', rmse_cl);
 
 
-save('results_koopman.mat', 'y_cl_desc', 'u_cl_desc');   % From Koopman
+save('results_koopman.mat', 'y_cl_desc', 'u_cl_desc','x_mean','u_mean');   % From Koopman
 

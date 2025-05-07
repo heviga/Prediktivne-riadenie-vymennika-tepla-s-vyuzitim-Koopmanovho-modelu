@@ -173,54 +173,34 @@ end
 save('results_20x0_MPC.mat', 'results_koopman', 'results_strejc', 'y0_vals');
 
 
-% %% --- Visualization of results ---
-% % load('results_20x0_MPC.mat');
-% 
-% % First 10 (lower)
-% figure('Name','First 10 initial conditions');
-% 
-% for i = 1:10
-%     % Koopman
-%     subplot(10,2,2*i-1)
-%     plot(0:sim_length, zeros(1,sim_length+1), 'k--'); hold on;
-%     plot(0:sim_length, results_koopman(i,2)/sim_length * ones(1,sim_length+1), 'm-', 'LineWidth', 2); % avg y value (proxy)
-%     plot(0:sim_length, results_strejc(i,2)/sim_length * ones(1,sim_length+1), 'b-', 'LineWidth', 2);
-%     title(sprintf('Initial #%d Y | Koop sum_e(u)=%.1f Obj=%.1f | Strejc sum_e(u)=%.1f Obj=%.1f',...
-%         i, results_koopman(i,4), results_koopman(i,6), results_strejc(i,4), results_strejc(i,6)));
-%     ylabel('Output y');
-%     grid on;
-% 
-%     % Control input
-%     subplot(10,2,2*i)
-%     plot(0:sim_length, results_koopman(i,1)/sim_length * ones(1,sim_length+1), 'm-', 'LineWidth', 2); hold on;
-%     plot(0:sim_length, results_strejc(i,1)/sim_length * ones(1,sim_length+1), 'b-', 'LineWidth', 2);
-%     ylabel('Input u');
-%     grid on;
-% end
-% xlabel('Time step');
-% sgtitle('First 10 Initial Conditions: Koopman vs Strejc');
-% 
-% 
-% % Last 10 (higher)
-% figure('Name','Last 10 initial conditions');
-% 
-% for i = 11:20
-%     % Koopman
-%     subplot(10,2,2*(i-10)-1)
-%     plot(0:sim_length, zeros(1,sim_length+1), 'k--'); hold on;
-%     plot(0:sim_length, results_koopman(i,2)/sim_length * ones(1,sim_length+1), 'm-', 'LineWidth', 2);
-%     plot(0:sim_length, results_strejc(i,2)/sim_length * ones(1,sim_length+1), 'b-', 'LineWidth', 2);
-%     title(sprintf('Initial #%d Y | Koop sum_e(u)=%.1f Obj=%.1f | Strejc sum_e(u)=%.1f Obj=%.1f',...
-%         i, results_koopman(i,4), results_koopman(i,6), results_strejc(i,4), results_strejc(i,6)));
-%     ylabel('Output y');
-%     grid on;
-% 
-%     % Control input
-%     subplot(10,2,2*(i-10))
-%     plot(0:sim_length, results_koopman(i,1)/sim_length * ones(1,sim_length+1), 'm-', 'LineWidth', 2); hold on;
-%     plot(0:sim_length, results_strejc(i,1)/sim_length * ones(1,sim_length+1), 'b-', 'LineWidth', 2);
-%     ylabel('Input u');
-%     grid on;
-% end
-% xlabel('Time step');
-% sgtitle('Last 10 Initial Conditions: Koopman vs Strejc');
+%% --- Visualization of Metrics - updated (lines only, last 4 metrics) ---
+
+metric_names = {'Sum |e| (y)', 'Sum |e| (u)', 'RMSE', 'Objective'};
+
+% First 10 (lower initial conditions)
+figure('Name','First 10 initial conditions - Metrics (Line)','Position',[100 100 1200 800]);
+for m = 1:4
+    subplot(2,2,m)
+    plot(y0_vals(1:10), results_koopman(1:10,m+2), 'm-o','LineWidth',2); hold on;
+    plot(y0_vals(1:10), results_strejc(1:10,m+2), 'b-s','LineWidth',2);
+    xlabel('Initial condition y₀ (°C)');
+    ylabel(metric_names{m});
+    title(['Metric: ', metric_names{m}]);
+    legend('Koopman','Strejc','Location','Best');
+    grid on;
+end
+sgtitle('Koopman vs Strejc - Metrics for First 10 Initial Conditions');
+
+% Last 10 (higher initial conditions)
+figure('Name','Last 10 initial conditions - Metrics (Line)','Position',[100 100 1200 800]);
+for m = 1:4
+    subplot(2,2,m)
+    plot(y0_vals(11:20), results_koopman(11:20,m+2), 'm-o','LineWidth',2); hold on;
+    plot(y0_vals(11:20), results_strejc(11:20,m+2), 'b-s','LineWidth',2);
+    xlabel('Initial condition y₀ (°C)');
+    ylabel(metric_names{m});
+    title(['Metric: ', metric_names{m}]);
+    legend('Koopman','Strejc','Location','Best');
+    grid on;
+end
+sgtitle('Koopman vs Strejc - Metrics for Last 10 Initial Conditions');

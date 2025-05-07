@@ -178,7 +178,7 @@ save('results_20x0_MPC.mat', 'results_koopman', 'results_strejc', 'y0_vals');
 metric_names = {'Sum |e| (y)', 'Sum |e| (u)', 'RMSE', 'Objective'};
 
 % First 10 (lower initial conditions)
-figure('Name','First 10 initial conditions - Metrics (Line)','Position',[100 100 1200 800]);
+figure('Name','First 10 initial conditions - Metrics (Line)');
 for m = 1:4
     subplot(2,2,m)
     plot(y0_vals(1:10), results_koopman(1:10,m+2), 'm-o','LineWidth',2); hold on;
@@ -187,12 +187,12 @@ for m = 1:4
     ylabel(metric_names{m});
     title(['Metric: ', metric_names{m}]);
     legend('Koopman','Strejc','Location','Best');
-    grid on;
+    grid on;grid minor;
 end
 sgtitle('Koopman vs Strejc - Metrics for First 10 Initial Conditions');
 
 % Last 10 (higher initial conditions)
-figure('Name','Last 10 initial conditions - Metrics (Line)','Position',[100 100 1200 800]);
+figure('Name','Last 10 initial conditions - Metrics (Line)');
 for m = 1:4
     subplot(2,2,m)
     plot(y0_vals(11:20), results_koopman(11:20,m+2), 'm-o','LineWidth',2); hold on;
@@ -201,6 +201,31 @@ for m = 1:4
     ylabel(metric_names{m});
     title(['Metric: ', metric_names{m}]);
     legend('Koopman','Strejc','Location','Best');
-    grid on;
+    grid on;grid minor;
 end
 sgtitle('Koopman vs Strejc - Metrics for Last 10 Initial Conditions');
+
+
+%% summary of metrics
+metrics_labels = {'Sum |u|', 'Sum |y|', 'Sum e (y)', 'Sum e (u)', 'RMSE', 'Objective'};
+
+koopman_mean = mean(results_koopman);
+strejc_mean = mean(results_strejc);
+
+koopman_median = median(results_koopman);
+strejc_median = median(results_strejc);
+
+koopman_std = std(results_koopman);
+strejc_std = std(results_strejc);
+
+fprintf('\n========== Koopman vs Strejc - Statistics Summary ==========\n');
+
+for i = 1:length(metrics_labels)
+    fprintf('\nMetric: %s\n', metrics_labels{i});
+    
+    fprintf('  Koopman -> Mean: %.2f, Median: %.2f, Std: %.2f\n', ...
+        koopman_mean(i), koopman_median(i), koopman_std(i));
+    
+    fprintf('  Strejc  -> Mean: %.2f, Median: %.2f, Std: %.2f\n', ...
+        strejc_mean(i), strejc_median(i), strejc_std(i));
+end

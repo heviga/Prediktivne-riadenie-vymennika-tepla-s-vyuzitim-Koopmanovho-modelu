@@ -7,7 +7,7 @@ C_k = double(readNPY('data/C_wC_all.npy'));
 D_k = 0;
 
 A_s = 0.97701252;
-B_s = 0.03150894;
+B_s = 0.03018256;
 C_s = 1;
 D_s = 0;
 

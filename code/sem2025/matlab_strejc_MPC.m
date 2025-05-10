@@ -21,7 +21,7 @@ u_std = std(Uall);
 
 % Discrete Strejc model parameters
 A = 0.97701252;
-B = 0.03150894;
+B = 0.03018256;
 C = 1;
 D = 0;
 
@@ -55,9 +55,9 @@ objective = 0;
 
 for k = 1:N
     constraints = [constraints, x{k+1} == A*x{k} + B*u{k}];
-    constraints = [constraints, umin <= u{k} <= umax];
+    constraints = [constraints, umin <= u{k} <= umax];%na zasahy
     yk = C * x{k};
-    constraints = [constraints, ymin <= yk <= ymax];
+    constraints = [constraints, ymin <= yk <= ymax];%na stavy
     objective = objective + Qy*(yk)^2 + Qu*u{k}^2;  % Control to 0
 end
 

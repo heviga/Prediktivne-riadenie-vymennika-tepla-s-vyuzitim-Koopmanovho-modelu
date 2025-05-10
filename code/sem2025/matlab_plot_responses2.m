@@ -90,7 +90,7 @@ max_length = 250;
 num_steps = length(step_indices);
 
 delay = 100;
-pre_window = 10;
+pre_window = 1;
 max_length = 250;
 
 x_steps = NaN(num_steps, max_length);
@@ -98,42 +98,37 @@ u_steps = NaN(num_steps, 1);
 colors = lines(num_steps);
 
 figure; hold on;
-
 for i = 1:num_steps
     start_idx = step_indices(i);
 
-    % Check that pre/post windows are in bounds
-    if start_idx - pre_window < 1 || (start_idx + delay + pre_window - 1 > length(u))
-        fprintf('Skipping step %d: not enough pre/post window.\n', i);
-        continue
-    end
+    % Bounds check
+ if start_idx - 1 < 1 || (start_idx + delay >= length(u))
+    fprintf('Skipping step %d: not enough delay margin.\n', i);
+    continue
+end
 
-    % Δu from steady regions before and after the step (with delay)
-    u_before = mean(u_scaled(start_idx - pre_window : start_idx - 1));
-    u_after  = mean(u_scaled(start_idx + delay : start_idx + delay + pre_window - 1));
+
+    % Use single points before and after step
+    u_before = u_scaled(start_idx - 1);
+    u_after  = u_scaled(start_idx + delay);
     delta_u = u_after - u_before;
 
-    % Δx = output change, normalized
-    x_before = mean(x_scaled(start_idx - pre_window : start_idx - 1));
+    x_before = x_scaled(start_idx - 1);
+    x_step = x_scaled(start_idx : start_idx + 249);
+    x_norm = (x_step - x_scaled(start_idx - 1)) / abs(delta_u);
 
-    % Get as much of the step as possible
-    available_len = min(max_length, length(x) - start_idx + 1);
-    x_step = x_scaled(start_idx : start_idx + available_len - 1);
-    x_norm = (x_step - x_before) / abs(delta_u);
-
-    % Flip if step was negative
     if delta_u < 0
         x_norm = -x_norm;
     end
 
-    % Store result
+    % Store
     x_steps(i, 1:available_len) = x_norm(:)';
     u_steps(i) = delta_u;
 
-    % Plot
     fprintf('Step %d: Δu = %.1f\n', i, delta_u);
     plot(0:available_len - 1, x_norm, 'Color', colors(i,:), 'LineWidth', 1.2);
 end
+
 
 
 % Plot formatting
@@ -142,6 +137,8 @@ xlabel('Index');
 ylabel('Normalized x');
 grid on;
 hold off;
+valid_rows = ~any(isnan(x_steps), 2);
+avg_step = mean(x_steps(valid_rows, :), 1);
 
 valid_steps = sum(~isnan(x_steps(:,1)));
 fprintf('Valid step responses: %d / %d\n', valid_steps, num_steps);
@@ -155,7 +152,7 @@ xlabel('Sample Index'); ylabel('Normalized x');
 grid on;
 
 % Estimate gain and time constant
-K = mean(avg_step(end-10:end), 'omitnan');
+K = mean(avg_step(end-6:end), 'omitnan');
 target_value = 0.632 * K;
 tau_idx = find(avg_step >= target_value, 1, 'first');
 

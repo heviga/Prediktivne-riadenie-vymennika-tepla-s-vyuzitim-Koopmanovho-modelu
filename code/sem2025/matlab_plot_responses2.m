@@ -71,6 +71,10 @@ Utest=u2(t2+1);
 %% hladanie stepov
 step_indices_1 = find(abs(diff(u1)) >1);
 step_indices_2 = find(abs(diff(u2)) >= 1);
+step_indices_2 = step_indices_2 + length(t1); % shift step casy druheho merania
+%merged step indices
+step_indices = [step_indices_1; step_indices_2]; % combine indices
+
 num_steps = length(step_indices_1) + length(step_indices_2);
 
 %merge
@@ -78,53 +82,59 @@ t = [t1; t2];
 x = [T4_1; T4_2]; %T4
 u = [u1; u2];%
 
-%merged step indices
-step_indices_2 = step_indices_2 + length(t1); % shift step casy druheho merania
-step_indices = [step_indices_1; step_indices_2]; % combine indices
+x_scaled = (x - x_mean) / x_std;
+u_scaled = (u - u_mean) / u_std;
 
 %store step responses
 max_length = 250;
-x_steps = NaN(num_steps, max_length);
 num_steps = length(step_indices);
 
+delay = 100;
+pre_window = 10;
+max_length = 250;
+
+x_steps = NaN(num_steps, max_length);
+u_steps = NaN(num_steps, 1);
+colors = lines(num_steps);
+
 figure; hold on;
-colors = lines(num_steps); % Generate different colors
 
 for i = 1:num_steps
-    % Get step start index
     start_idx = step_indices(i);
-    
-    % Define end of step (next step or end of data)
-    if i < num_steps
-        end_idx = step_indices(i+1) - 1;
-    else
-        end_idx = step_indices(end)+250;
+
+    % Check that pre/post windows are in bounds
+    if start_idx - pre_window < 1 || (start_idx + delay + pre_window - 1 > length(u))
+        fprintf('Skipping step %d: not enough pre/post window.\n', i);
+        continue
     end
 
-    % Extract step response and reset time
-    x_step = x(start_idx:end_idx);
-    t_step = t(start_idx:end_idx) - t(start_idx);%0-250
-    
-    % Compute step change (difference in u)
-    step_size = u(start_idx+1) - u(start_idx);
-    
-    % Normalize relative to step change
-    x_norm = (x_step - x_step(1)) / abs(step_size);  
+    % Δu from steady regions before and after the step (with delay)
+    u_before = mean(u_scaled(start_idx - pre_window : start_idx - 1));
+    u_after  = mean(u_scaled(start_idx + delay : start_idx + delay + pre_window - 1));
+    delta_u = u_after - u_before;
 
-    % If step change is negative, flip response to be positive
-    if step_size < 0
+    % Δx = output change, normalized
+    x_before = mean(x_scaled(start_idx - pre_window : start_idx - 1));
+
+    % Get as much of the step as possible
+    available_len = min(max_length, length(x) - start_idx + 1);
+    x_step = x_scaled(start_idx : start_idx + available_len - 1);
+    x_norm = (x_step - x_before) / abs(delta_u);
+
+    % Flip if step was negative
+    if delta_u < 0
         x_norm = -x_norm;
     end
 
-    % Store in matrix (truncate or pad with NaN)
-    len = min(length(x_norm), max_length);
-    x_steps(i, 1:len) = x_norm(1:len);
+    % Store result
+    x_steps(i, 1:available_len) = x_norm(:)';
+    u_steps(i) = delta_u;
 
-    % Plot each step response
-    disp(['Step ', num2str(i), ': Δu = ', num2str(step_size)]);
-
-    plot(0:len-1, x_steps(i, 1:len), 'Color', colors(i,:));
+    % Plot
+    fprintf('Step %d: Δu = %.1f\n', i, delta_u);
+    plot(0:available_len - 1, x_norm, 'Color', colors(i,:), 'LineWidth', 1.2);
 end
+
 
 % Plot formatting
 title('Step Responses');
@@ -133,55 +143,38 @@ ylabel('Normalized x');
 grid on;
 hold off;
 
-% priemerna step response
-avg_step = nanmean(x_steps, 1);
+valid_steps = sum(~isnan(x_steps(:,1)));
+fprintf('Valid step responses: %d / %d\n', valid_steps, num_steps);
+
+avg_step = mean(x_steps, 1, 'omitnan');
 
 figure;
 plot(0:max_length-1, avg_step, 'k', 'LineWidth', 2);
 title('Average Normalized Step Response');
-xlabel('Index');
-ylabel('Normalized x');
+xlabel('Sample Index'); ylabel('Normalized x');
 grid on;
 
-% === Compute gain K and time constant tau ===
-K = mean(avg_step(end-5:end));           % Steady-state gain
-target_value = 0.632 * K;                % 63.2% of K for first-order system
-
-% Find index where the average response reaches or exceeds 63.2% of K
+% Estimate gain and time constant
+K = mean(avg_step(end-10:end), 'omitnan');
+target_value = 0.632 * K;
 tau_idx = find(avg_step >= target_value, 1, 'first');
 
-fprintf('Steady-state gain K ≈ %.4f\n', K);
-fprintf('Time constant (tau) ≈ %d samples\n', tau_idx);
+fprintf('\nSteady-state gain K ≈ %.4f\n', K);
+if ~isempty(tau_idx)
+    fprintf('Time constant (tau) ≈ %d samples\n', tau_idx);
+else
+    warning('Tau could not be determined: target value not reached.');
+end
 
-
-% Optional: plot tau visually
+% Annotate plot
 hold on;
 yline(K, '--', 'K');
 yline(target_value, '--', '63.2% of K');
-xline(tau_idx, '--r', 'tau');
-legend('Average Response', 'K', '63.2% of K', 'tau');
-hold off;
-
-
-
-
-% %vektory x,u
-% x_min = min(x);
-% x_max = max(x);
-% u_min = min(u);
-% u_max = max(u);
-% 
-% % normalizovane
-% x_norm = minmax_normalize(x, x_min, x_max);
-% u_norm = minmax_normalize(u, u_min, u_max);
-
-
-
-%% scaling vektorov
-function x_norm = minmax_normalize(x, xmin, xmax)
-    x_norm = (x - xmin) / (xmax - xmin);
+if ~isempty(tau_idx)
+    xline(tau_idx, '--r', 'tau');
 end
-
+legend('Average Response', 'K', '63.2% of K', 'τ');
+hold off;
 
 
 

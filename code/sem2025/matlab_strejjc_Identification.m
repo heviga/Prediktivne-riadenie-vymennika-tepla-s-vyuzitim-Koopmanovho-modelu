@@ -50,7 +50,7 @@ u_scaled_test = (Utest - u_mean) / u_std;
 
 % Discrete-time Strejc model
 A = 0.97701252;
-B = 0.03018256;
+B = 0.03150894;
 C = 1;
 D = 0;
 

@@ -9,7 +9,7 @@ A_k = double(readNPY('data/A_wC_all.npy'));
 B_k = double(readNPY('data/B_wC_all.npy'));
 C_k = double(readNPY('data/C_wC_all.npy'));
 A_s = 0.97701252;
-B_s = 0.03018256;
+B_s = 0.03150894;
 C_s = 1;
 
 %% Load scaling data

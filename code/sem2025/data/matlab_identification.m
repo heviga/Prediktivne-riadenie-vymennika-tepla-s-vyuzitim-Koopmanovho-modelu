@@ -26,20 +26,20 @@ u = [u1; u2];      % full input
 t = [t1; t2];      % full time
 
 % === Apply StandardScaler logic === CELY DATASET
-% x_mean = mean(x);    x_std = std(x);
-% u_mean = mean(u);    u_std = std(u);
-% 
-% x_scaled = (x - x_mean) / x_std;
-% u_scaled = (u - u_mean) / u_std;
+x_mean = mean(x);    x_std = std(x);
+u_mean = mean(u);    u_std = std(u);
+
+x_scaled = (x - x_mean) / x_std;
+u_scaled = (u - u_mean) / u_std;
 
 % === Apply StandardScaler logic LEN NA TRAINING DATA AKO V PYTHONE===
-x_mean = mean(T4_1);
-x_std = std(T4_1);
-x_scaled = (x - x_mean) / x_std;
-
-u_mean = mean(u1);
-u_std = std(u1);
-u_scaled = (u - u_mean) / u_std;
+% x_mean = mean(T4_1);
+% x_std = std(T4_1);
+% x_scaled = (x - x_mean) / x_std;
+% 
+% u_mean = mean(u1);
+% u_std = std(u1);
+% u_scaled = (u - u_mean) / u_std;
 
 % save('scaled_data.mat', 'x_scaled', 'u_scaled')
 %save('unscaled_data.mat', 'x', 'u')

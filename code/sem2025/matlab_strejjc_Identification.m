@@ -158,7 +158,34 @@ legend('Open-loop Input');
 title('Input Comparison');
 grid on; grid minor;
 
-%%
+%% save inputs
+
+u_scaled_all = (Uall - u_mean) / u_std;
+split_idx = length(Uall) - 2000;
+figure;
+
+subplot(2,1,1)
+plot(Uall, 'b-', 'LineWidth', 1.5);hold on;
+xline(split_idx, '--k');
+ylabel('True Input u (\%)');
+title('True Input Signal');
+grid on;
+xlim([0 length(Uall)])
+
+subplot(2,1,2)
+plot(u_scaled_all, 'r--', 'LineWidth', 1.5);hold on;
+xline(split_idx, '--k');
+ylabel('Scaled Input u');
+xlabel('Sample');
+title('Scaled Input Signal');
+grid on;
+xlim([0 length(Uall)])
+
+% Save figure
+saveas(gcf, 'C:\Users\ivadu\Desktop\8.semestrik\vymennik\prez\input_comparison.png');
 %% Save for later plotting
 %save('strejc_open_loop_comparison_data.mat', ...
 %    'y_open_desc', 'y_true', 'time', 'u_open_desc');
+
+min(u_scaled_all)
+max(u_scaled_all)

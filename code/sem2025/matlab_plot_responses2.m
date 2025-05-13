@@ -97,46 +97,60 @@ x_steps = NaN(num_steps, max_length);
 u_steps = NaN(num_steps, 1);
 colors = lines(num_steps);
 
-figure; hold on;
+%% Plot normalized and true (unscaled) step responses side by side
+figure;
+
+subplot(2,1,1); hold on;
+title('Normalized Step Responses');
+xlabel('Index');
+ylabel('Normalized x');
+grid on; grid minor;
+
+subplot(2,1,2); hold on;
+title('True Step Responses (Unscaled)');
+xlabel('Index');
+ylabel('Temperature [°C]');
+grid on; grid minor;
+
 for i = 1:num_steps
     start_idx = step_indices(i);
 
     % Bounds check
- if start_idx - 1 < 1 || (start_idx + delay >= length(u))
-    fprintf('Skipping step %d: not enough delay margin.\n', i);
-    continue
-end
+    if start_idx - 1 < 1 || (start_idx + delay >= length(u))
+        fprintf('Skipping step %d: not enough delay margin.\n', i);
+        continue
+    end
 
-
-    % Use single points before and after step
+    % Δu and normalization
     u_before = u_scaled(start_idx - 1);
     u_after  = u_scaled(start_idx + delay);
     delta_u = u_after - u_before;
 
     x_before = x_scaled(start_idx - 1);
-    x_step = x_scaled(start_idx : start_idx + 249);
-    x_norm = (x_step - x_scaled(start_idx - 1)) / abs(delta_u);
+    x_step_scaled = x_scaled(start_idx : start_idx + 249);
+    x_step_raw = x(start_idx : start_idx + 249);
 
+    x_norm = (x_step_scaled - x_scaled(start_idx - 1)) / abs(delta_u);
     if delta_u < 0
         x_norm = -x_norm;
     end
 
-    % Store
-    x_steps(i, 1:available_len) = x_norm(:)';
+    % Store and plot
+    x_steps(i, :) = x_norm(:)';
     u_steps(i) = delta_u;
 
+    subplot(2,1,1);
+    plot(0:max_length - 1, x_norm, 'Color', colors(i,:), 'LineWidth', 1.2);
+
+    subplot(2,1,2);
+    plot(0:max_length - 1, x_step_raw, 'Color', colors(i,:), 'LineWidth', 1.2);
+
     fprintf('Step %d: Δu = %.1f\n', i, delta_u);
-    plot(0:available_len - 1, x_norm, 'Color', colors(i,:), 'LineWidth', 1.2);
 end
 
+% Save figure
+saveas(gcf, 'C:\Users\ivadu\Desktop\8.semestrik\vymennik\prez\all_step_responses_true_and_scaled_subplot.png');
 
-
-% Plot formatting
-title('Step Responses');
-xlabel('Index');
-ylabel('Normalized x');
-grid on;
-hold off;
 valid_rows = ~any(isnan(x_steps), 2);
 avg_step = mean(x_steps(valid_rows, :), 1);
 
@@ -170,8 +184,9 @@ yline(target_value, '--', '63.2% of K');
 if ~isempty(tau_idx)
     xline(tau_idx, '--r', 'tau');
 end
-legend('Average Response', 'K', '63.2% of K', 'τ');
+legend('Average Response', 'K', '63.2% of K', 'τ','Location','best');
 hold off;
+saveas(gcf, 'C:\Users\ivadu\Desktop\8.semestrik\vymennik\prez\average_step_response.png');
 
 
 

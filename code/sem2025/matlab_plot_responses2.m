@@ -98,18 +98,10 @@ u_steps = NaN(num_steps, 1);
 colors = lines(num_steps);
 
 %% Plot normalized and true (unscaled) step responses side by side
-figure;
-
-subplot(2,1,1); hold on;
+figure; hold on;
 title('Normalized Step Responses');
-xlabel('Index');
-ylabel('Normalized x');
-grid on; grid minor;
-
-subplot(2,1,2); hold on;
-title('True Step Responses (Unscaled)');
-xlabel('Index');
-ylabel('Temperature [°C]');
+xlabel('Sample Index');
+ylabel('Normalized Output');
 grid on; grid minor;
 
 for i = 1:num_steps
@@ -126,9 +118,7 @@ for i = 1:num_steps
     u_after  = u_scaled(start_idx + delay);
     delta_u = u_after - u_before;
 
-    x_before = x_scaled(start_idx - 1);
     x_step_scaled = x_scaled(start_idx : start_idx + 249);
-    x_step_raw = x(start_idx : start_idx + 249);
 
     x_norm = (x_step_scaled - x_scaled(start_idx - 1)) / abs(delta_u);
     if delta_u < 0
@@ -139,17 +129,13 @@ for i = 1:num_steps
     x_steps(i, :) = x_norm(:)';
     u_steps(i) = delta_u;
 
-    subplot(2,1,1);
     plot(0:max_length - 1, x_norm, 'Color', colors(i,:), 'LineWidth', 1.2);
-
-    subplot(2,1,2);
-    plot(0:max_length - 1, x_step_raw, 'Color', colors(i,:), 'LineWidth', 1.2);
 
     fprintf('Step %d: Δu = %.1f\n', i, delta_u);
 end
 
 % Save figure
-saveas(gcf, 'C:\Users\ivadu\Desktop\8.semestrik\vymennik\prez\all_step_responses_true_and_scaled_subplot.png');
+saveas(gcf, 'C:\Users\ivadu\Desktop\8.semestrik\vymennik\prez\all_step_scaled_only.png');
 
 valid_rows = ~any(isnan(x_steps), 2);
 avg_step = mean(x_steps(valid_rows, :), 1);

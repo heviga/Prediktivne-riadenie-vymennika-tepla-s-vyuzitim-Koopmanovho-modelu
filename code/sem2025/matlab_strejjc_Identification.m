@@ -166,7 +166,7 @@ figure;
 
 subplot(2,1,1)
 plot(Uall, 'b-', 'LineWidth', 1.5);hold on;
-xline(split_idx, '--k');
+xline(split_idx, 'k','LineWidth',2.5);
 ylabel('True Input u (\%)');
 title('True Input Signal');
 grid on;
@@ -174,7 +174,7 @@ xlim([0 length(Uall)])
 
 subplot(2,1,2)
 plot(u_scaled_all, 'r--', 'LineWidth', 1.5);hold on;
-xline(split_idx, '--k');
+xline(split_idx, 'k','LineWidth',2.5);
 ylabel('Scaled Input u');
 xlabel('Sample');
 title('Scaled Input Signal');

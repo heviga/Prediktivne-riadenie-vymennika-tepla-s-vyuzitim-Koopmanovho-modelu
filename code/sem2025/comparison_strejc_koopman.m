@@ -128,13 +128,17 @@ plot(time, y_true, 'k:', 'LineWidth', 1.5); hold on;
 plot(time, y_open_strejc, 'b-', 'LineWidth', 2);
 plot(time, y_open_koopman, 'm--', 'LineWidth', 2);
 xlabel('Time step'); ylabel('Output y (°C)');
-legend('True Output', 'Strejc Prediction', 'Koopman Prediction');
+lgd = legend('True Output', 'Strejc Prediction', 'Koopman Prediction', 'Location', 'southwest');
+lgd.FontSize = 7;  % or any smaller size you prefer
 title('Open-loop Output Comparison');
 grid on;
 
 subplot(2,1,2)
 stairs(time, u_open_desc, 'b', 'LineWidth', 2); hold on;
 xlabel('Time step'); ylabel('Input u');
-legend('True Input');
+legend('True Input','Location', 'southwest');
 title('Open-loop Input Comparison');
 grid on;
+
+saveas(gcf, 'C:\Users\ivadu\Desktop\8.semestrik\vymennik\prez\identification_comparison.png');
+

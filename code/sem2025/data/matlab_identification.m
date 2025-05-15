@@ -89,19 +89,27 @@ target_value = 0.632 * K;
 tau_idx = find(avg_step >= target_value, 1, 'first');
 
 % === Plot results ===
+% === Plot results ===
 figure;
 plot(avg_step, 'k', 'LineWidth', 2); hold on;
 yline(K, '--', 'K');
-yline(target_value, '--', '63.2% of K');
-xline(tau_idx, '--r', 'tau');
-xlabel('Sample Index'); ylabel('Normalized Output');
-title('Avg Normalized Step Response (Scaled x & Δu)');
-grid on;
-legend('Avg Step', 'K', '63.2% K', 'τ');
+yline(target_value, '--');
+xline(tau_idx, '--r');
 
-% === Output ===
-fprintf('Steady-state gain K ≈ %.4f\n', K);
-fprintf('Time constant τ ≈ %d samples\n', tau_idx);
+% Annotate the time constant on plot
+text(tau_idx + 5, 0, ...
+    sprintf('T = %d samples', tau_idx), ...
+    'Color', 'r', 'FontSize', 10, 'FontWeight', 'bold');
+
+xlabel('Sample Index');
+ylabel('Normalized Output');
+title('Average Normalized Step Response (Scaled x & Δu)');
+grid on;grid minor;
+legend('Avg Step', 'K', '63.2% K', 'T', 'Location','best');
+ylim([-0.1 1.6])
+
+% Save figure
+saveas(gcf, 'C:\Users\ivadu\Desktop\8.semestrik\vymennik\prez\average_step_response.png');
 
 
 % Compute StandardScaler-style stats

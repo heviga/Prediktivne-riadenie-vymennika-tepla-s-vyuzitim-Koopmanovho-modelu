@@ -91,7 +91,7 @@ tau_idx = find(avg_step >= target_value, 1, 'first');
 % === Plot results ===
 % === Plot results ===
 figure;
-plot(avg_step, 'k', 'LineWidth', 2); hold on;
+plot(avg_step, 'k', 'LineWidth', 2); hold on; box on;
 yline(K, '--', 'K');
 yline(target_value, '--');
 xline(tau_idx, '--r');
@@ -109,7 +109,7 @@ legend('Avg Step', 'K', '63.2% K', 'T', 'Location','best');
 ylim([-0.1 1.6])
 
 % Save figure
-saveas(gcf, 'C:\Users\ivadu\Desktop\8.semestrik\vymennik\prez\average_step_response.png');
+%saveas(gcf, 'C:\Users\ivadu\Desktop\8.semestrik\vymennik\prez\average_step_response.png');
 
 
 % Compute StandardScaler-style stats

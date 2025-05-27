@@ -100,9 +100,9 @@ colors = lines(num_steps);
 %% Plot normalized and true (unscaled) step responses side by side
 figure; hold on;
 title('Normalized Step Responses');
-xlabel('Sample Index');
+xlabel('Time (s)');
 ylabel('Normalized Output');
-grid on; grid minor;
+grid on; grid minor;box on;
 
 for i = 1:num_steps
     start_idx = step_indices(i);
@@ -148,8 +148,8 @@ avg_step = mean(x_steps, 1, 'omitnan');
 figure;
 plot(0:max_length-1, avg_step, 'k', 'LineWidth', 2);
 title('Average Normalized Step Response');
-xlabel('Sample Index'); ylabel('Normalized x');
-grid on;
+xlabel('Time (s)'); ylabel('Normalized Output');
+grid on;box on;grid minor;
 
 % Estimate gain and time constant
 K = mean(avg_step(end-6:end), 'omitnan');
@@ -165,12 +165,11 @@ end
 
 % Annotate plot
 hold on;
-yline(K, '--', 'K');
-yline(target_value, '--', '63.2% of K');
+yline(target_value, '--', '$63.2\%$ of $\mathrm{K}$');
 if ~isempty(tau_idx)
-    xline(tau_idx, '--r', 'tau');
+    xline(tau_idx, '--r', 'T', 'Interpreter', 'latex','LabelVerticalAlignment', 'bottom');
 end
-legend('Average Response', 'K', '63.2% of K', 'τ','Location','best');
+legend('Average Response',  '$63.2\%$ of $\mathrm{K}$', '$\mathrm{T}$','Location','best');
 hold off;
 saveas(gcf, 'C:\Users\ivadu\Desktop\8.semestrik\vymennik\prez\average_step_response.png');
 

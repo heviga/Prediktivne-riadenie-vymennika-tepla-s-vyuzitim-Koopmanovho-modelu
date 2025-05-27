@@ -1,4 +1,7 @@
 clc; clear; close all
+set(groot, 'defaultTextInterpreter', 'latex');
+set(groot, 'defaultLegendInterpreter', 'latex');
+set(groot, 'defaultAxesTickLabelInterpreter', 'latex');
 
 %% Load models
 A_k = double(readNPY('data/A_wC_all.npy'));
@@ -119,8 +122,8 @@ for i = 1:length(y0_vals_scaled)
     y_sum_koop = sum(abs(e_k));
     e_sum_koop_y = sum(abs(e_k - x_mean));
     e_sum_koop_u = sum(abs(uk_desc - u_mean));
-    rmse_koop = sqrt(mean(e_k.^2));
-    obj_koop = sum(Qy * (e_k).^2 + Qu * (uk_desc).^2);
+    rmse_koop = sqrt(mean((e_k-x_mean).^2));
+    obj_koop = sum(Qy * (yk(1:end-1)).^2 + Qu * (uk).^2);
 
     koopman_metrics = [u_sum_koop, y_sum_koop, e_sum_koop_y, e_sum_koop_u, rmse_koop, obj_koop];
     results_koopman = [results_koopman; koopman_metrics];
@@ -147,8 +150,8 @@ for i = 1:length(y0_vals_scaled)
     y_sum_strejc = sum(abs(e_s));
     e_sum_strejc_y =sum(abs(e_s-x_mean));
     e_sum_strejc_u = sum(abs(us_desc-u_mean));
-    rmse_strejc = sqrt(mean(e_s.^2));
-    obj_strejc = sum(Qy * (e_s).^2 + Qu * (us_desc).^2);
+    rmse_strejc = sqrt(mean((e_s-x_mean).^2));
+    obj_strejc = sum(Qy * (ys(1:end-1)).^2 + Qu * (us).^2);
 
     strejc_metrics = [u_sum_strejc, y_sum_strejc,e_sum_strejc_y, e_sum_strejc_u, rmse_strejc, obj_strejc];
     results_strejc = [results_strejc; strejc_metrics];
@@ -175,36 +178,97 @@ save('results_20x0_MPC.mat', 'results_koopman', 'results_strejc', 'y0_vals');
 
 %% --- Visualization of Metrics - updated (lines only, last 4 metrics) ---
 
-metric_names = {'Sum |e| (y)', 'Sum |e| (u)', 'RMSE', 'Objective'};
+% metric_names = {'Sum |e| (y)', 'Sum |e| (u)', 'RMSE', 'Objective'};
+% 
+% % First 10 (lower initial conditions)
+% figure('Name','First 10 initial conditions - Metrics (Line)');
+% for m = 1:4
+%     subplot(2,2,m)
+%     plot(y0_vals(1:10), results_koopman(1:10,m+2), 'm-o','LineWidth',2); hold on;
+%     plot(y0_vals(1:10), results_strejc(1:10,m+2), 'b-s','LineWidth',2);
+%     xlabel('Initial condition y₀ (°C)');
+%     ylabel(metric_names{m});
+%     title(['Metric: ', metric_names{m}]);
+%     legend('Koopman','Strejc','Location','Best');
+%     grid on;grid minor;
+% end
+% sgtitle('Koopman vs Strejc - Metrics for First 10 Initial Conditions');
+% saveas(gcf, 'C:\Users\ivadu\Desktop\8.semestrik\vymennik\prez\metrics_first10_conditions.png');
+% 
+% 
+% % Last 10 (higher initial conditions)
+% figure('Name','Last 10 initial conditions - Metrics (Line)');
+% for m = 1:4
+%     subplot(2,2,m)
+%     plot(y0_vals(11:20), results_koopman(11:20,m+2), 'm-o','LineWidth',2); hold on;
+%     plot(y0_vals(11:20), results_strejc(11:20,m+2), 'b-s','LineWidth',2);
+%     xlabel('Initial condition y₀ (°C)');
+%     ylabel(metric_names{m});
+%     title(['Metric: ', metric_names{m}]);
+%     legend('Koopman','Strejc','Location','Best');
+%     grid on;grid minor;
+% end
+% sgtitle('Koopman vs Strejc - Metrics for Last 10 Initial Conditions');
+% saveas(gcf, 'C:\Users\ivadu\Desktop\8.semestrik\vymennik\prez\metrics_last10_conditions.png');
 
-% First 10 (lower initial conditions)
-figure('Name','First 10 initial conditions - Metrics (Line)');
-for m = 1:4
-    subplot(2,2,m)
-    plot(y0_vals(1:10), results_koopman(1:10,m+2), 'm-o','LineWidth',2); hold on;
-    plot(y0_vals(1:10), results_strejc(1:10,m+2), 'b-s','LineWidth',2);
-    xlabel('Initial condition y₀ (°C)');
-    ylabel(metric_names{m});
-    title(['Metric: ', metric_names{m}]);
-    legend('Koopman','Strejc','Location','Best');
-    grid on;grid minor;
+
+%%
+% === RMSE and Objective Function only ===
+metric_names = {'RMSE', 'Objective function'};
+
+% Indexy v result matrice: RMSE = col 5, Objective = col 6
+metric_idx = [5, 6];
+
+% --- First 10 initial conditions ---
+% --- First 10 initial conditions ---
+figure('Name','First 10 initial conditions','Position',[100 100 800 400]);
+for i = 1:2
+    subplot(1,2,i)
+    plot(y0_vals(1:10), results_koopman(1:10,metric_idx(i)), 'm-o','LineWidth',2); hold on;
+    plot(y0_vals(1:10), results_strejc(1:10,metric_idx(i)), 'b-s','LineWidth',2);
+
+xlabel('$\mathrm{Initial\ condition\ } y_0\ (^\circ\mathrm{C})$', 'Interpreter', 'latex');
+if i == 1
+    ylabel('RMSE ($^\circ$C)', 'Interpreter', 'latex');
+else
+    ylabel('Objective function', 'Interpreter', 'latex');
 end
-sgtitle('Koopman vs Strejc - Metrics for First 10 Initial Conditions');
+title(metric_names{i}, 'Interpreter', 'latex');
+legend('Koopman','Strejc','Location','Best', 'Interpreter','latex');
+set(gca, 'FontName', 'Latin Modern Roman');
+grid on; grid minor;
 
-% Last 10 (higher initial conditions)
-figure('Name','Last 10 initial conditions - Metrics (Line)');
-for m = 1:4
-    subplot(2,2,m)
-    plot(y0_vals(11:20), results_koopman(11:20,m+2), 'm-o','LineWidth',2); hold on;
-    plot(y0_vals(11:20), results_strejc(11:20,m+2), 'b-s','LineWidth',2);
-    xlabel('Initial condition y₀ (°C)');
-    ylabel(metric_names{m});
-    title(['Metric: ', metric_names{m}]);
-    legend('Koopman','Strejc','Location','Best');
-    grid on;grid minor;
 end
-sgtitle('Koopman vs Strejc - Metrics for Last 10 Initial Conditions');
+sgtitle('Control with Initial Conditions Below Steady-State');
 
+
+
+saveas(gcf, 'C:\Users\ivadu\Desktop\8.semestrik\vymennik\prez\metrics_rmse_obj_first10.png');
+%(°C)
+% --- Last 10 initial conditions ---
+figure('Name','Last 10 initial conditions','Position',[100 100 800 400]);
+for i = 1:2
+    subplot(1,2,i)
+    plot(y0_vals(11:20), results_koopman(11:20,metric_idx(i)), 'm-o','LineWidth',2); hold on;
+    plot(y0_vals(11:20), results_strejc(11:20,metric_idx(i)), 'b-s','LineWidth',2);
+
+xlabel('$\mathrm{Initial\ condition\ } y_0\ (^\circ\mathrm{C})$', 'Interpreter', 'latex');
+if i == 1
+    ylabel('RMSE ($^\circ$C)', 'Interpreter', 'latex');
+else
+    ylabel('Objective function', 'Interpreter', 'latex');
+end
+title(metric_names{i}, 'Interpreter', 'latex');
+legend('Koopman','Strejc','Location','Best', 'Interpreter','latex');
+set(gca, 'FontName', 'Latin Modern Roman');
+
+grid on; grid minor;
+end
+sgtitle('Control with Initial Conditions Above Steady-State');
+
+
+
+saveas(gcf, 'C:\Users\ivadu\Desktop\8.semestrik\vymennik\prez\metrics_rmse_obj_last10.png');
 
 %% summary of metrics
 metrics_labels = {'Sum |u|', 'Sum |y|', 'Sum e (y)', 'Sum e (u)', 'RMSE', 'Objective'};

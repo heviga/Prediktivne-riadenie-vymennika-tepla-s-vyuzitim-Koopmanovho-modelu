@@ -159,30 +159,53 @@ title('Input Comparison');
 grid on; grid minor;
 
 %% save inputs
-
 u_scaled_all = (Uall - u_mean) / u_std;
 split_idx = length(Uall) - 2000;
+
+% Split input
+U_train = Uall(1:split_idx);
+U_test = Uall(split_idx+1:end);
+u_scaled_train = u_scaled_all(1:split_idx);
+u_scaled_test = u_scaled_all(split_idx+1:end);
+
 figure;
 
-subplot(2,1,1)
-plot(Uall, 'b-', 'LineWidth', 1.5);hold on;
-xline(split_idx, 'k','LineWidth',2.5);
-ylabel('True Input u (\%)');
-title('True Input Signal');
-grid on;
-xlim([0 length(Uall)])
+% Use tiledlayout
+t = tiledlayout(1,1);
+t.TileSpacing = 'compact';
+t.Padding = 'compact';
 
-subplot(2,1,2)
-plot(u_scaled_all, 'r--', 'LineWidth', 1.5);hold on;
-xline(split_idx, 'k','LineWidth',2.5);
-ylabel('Scaled Input u');
-xlabel('Sample');
-title('Scaled Input Signal');
+% === Top plot (true input)
+nexttile;
+p1 = plot(1:split_idx, U_train, 'b-', 'LineWidth', 1.5); hold on;
+p2 = plot(split_idx+1:length(Uall), U_test, 'r-', 'LineWidth', 1.5);
+xline(split_idx, 'k', 'LineWidth', 2);
+ylabel('Input u (\%)');
+xlabel('Time (s)');
+title('Input Signal');
 grid on;
-xlim([0 length(Uall)])
+xlim([0 length(Uall)]);
+
+% === Bottom plot (scaled input)
+% nexttile;
+% plot(1:split_idx, u_scaled_train, 'b-', 'LineWidth', 1.5); hold on;
+% plot(split_idx+1:length(Uall), u_scaled_test, 'r-', 'LineWidth', 1.5);
+% xline(split_idx, 'k', 'LineWidth', 2);
+% ylabel('Scaled Input u');
+% xlabel('Time (s)');
+% title('Scaled Input Signal');
+% grid on;
+% xlim([0 length(Uall)]);
+
+% === Shared legend
+lgd = legend([p1 p2], {'Training Data', 'Testing Data'}, ...
+    'Orientation', 'horizontal', ...
+    'Location', 'southoutside');
+
 
 % Save figure
-saveas(gcf, 'C:\Users\ivadu\Desktop\8.semestrik\vymennik\prez\input_comparison.png');
+saveas(gcf, 'C:\Users\ivadu\Desktop\8.semestrik\vymennik\prez\input_changes.png');
+
 %% Save for later plotting
 %save('strejc_open_loop_comparison_data.mat', ...
 %    'y_open_desc', 'y_true', 'time', 'u_open_desc');

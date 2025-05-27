@@ -38,7 +38,7 @@ nx = size(A,1);
 ny = 1;
 
 x0 = zeros(nx,1); x0(1) = Ytest_scaled(1);%z0
-y0 = (50 - x_mean) / x_std;
+y0 = (50 - x_mean) / x_std; %POC PODMIENKA
 x0 = pinv(C)*y0;
 
 x_open = zeros(nx, sim_length+1);
@@ -90,6 +90,7 @@ end
 controller = optimizer(constraints, objective, sdpsettings('solver','quadprog'), x0_param, u{1});
 
 % Closed-loop simulation
+tic;
 x_cl = zeros(nx, sim_length+1);
 
 y_cl = zeros(ny, sim_length+1);
@@ -103,7 +104,8 @@ for t = 1:sim_length
     x_cl(:,t+1) = A * x_cl(:,t) + B * u_cl(:,t);
     y_cl(:,t+1) = C * x_cl(:,t+1);
 end
-
+elapsed_time = toc;
+fprintf('Koopman MPC simulation time: %.4f seconds\n', elapsed_time);
 % Descale closed-loop
 y_cl_desc = y_cl * x_std + x_mean;
 u_cl_desc = u_cl * u_std + u_mean;

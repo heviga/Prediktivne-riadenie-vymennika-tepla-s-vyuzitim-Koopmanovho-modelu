@@ -4,6 +4,9 @@
 %save energy -> low Qy + high Qu
 clc; clear; close all
 
+% Add path to readNPY function
+addpath('../');
+
 %% Load models
 A_k = double(readNPY('data/A_wC_all.npy'));
 B_k = double(readNPY('data/B_wC_all.npy'));

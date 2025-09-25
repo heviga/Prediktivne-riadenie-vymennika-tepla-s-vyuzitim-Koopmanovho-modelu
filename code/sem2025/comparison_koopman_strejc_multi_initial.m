@@ -3,6 +3,9 @@ set(groot, 'defaultTextInterpreter', 'latex');
 set(groot, 'defaultLegendInterpreter', 'latex');
 set(groot, 'defaultAxesTickLabelInterpreter', 'latex');
 
+% Add path to readNPY function
+addpath('../');
+
 %% Load models
 A_k = double(readNPY('data/A_wC_all.npy'));
 B_k = double(readNPY('data/B_wC_all.npy'));

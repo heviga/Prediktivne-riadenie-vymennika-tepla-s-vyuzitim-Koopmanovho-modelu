@@ -1,0 +1,68 @@
+# Deep Koopman Operator Project Requirements
+# Predictive control of heat exchangers with MATLAB integration
+
+# Python Environment Versions:
+# - MATLAB Integration: Python 3.9 (required for MATLAB compatibility)
+# - Jupyter Notebooks: Python 3.11 (koopman_py311 environment)
+# - Development: Python 3.11 (recommended for latest features)
+
+# Core dependencies for Koopman operator learning
+torch==2.8.0
+torchvision==0.23.0
+torchaudio==2.8.0
+torchdiffeq==0.2.5
+torchmetrics==1.8.2
+torchsde==0.2.6
+
+# NeuroMANCER framework for deep learning control
+neuromancer==1.5.4
+
+# Numerical computing
+numpy==1.26.0
+scipy==1.16.2
+pandas==2.3.2
+
+# Machine learning
+scikit-learn==1.7.2
+joblib==1.5.2
+
+# Optimization and control
+cvxpy==1.7.2
+casadi==3.7.2
+osqp==1.0.4
+scs==3.2.8
+
+# State estimation and filtering
+filterpy==1.4.5
+
+# Visualization
+matplotlib==3.10.6
+seaborn==0.13.2
+
+# Jupyter development
+jupyter==1.1.1
+jupyterlab==4.4.7
+ipython==9.5.0
+ipykernel==6.30.1
+notebook==7.4.5
+
+# Utilities
+tqdm==4.67.1
+dill==0.4.0
+networkx==3.0
+
+# MATLAB integration support
+# Note: MATLAB Engine for Python should be installed separately
+# pip install matlabengine
+
+# Environment Usage:
+# 1. MATLAB Scripts (matlab_koopman_cl.m, model_matlab_strejc_MPC.m):
+#    - Use Python 3.9 for baseline_inference.py integration
+#    - Path: C:\Users\ivadu\AppData\Local\Programs\Python\Python39\python.exe
+#
+# 2. Jupyter Notebooks (DeepKoopman_wC SCALED_ON_FULL .ipynb):
+#    - Use Python 3.11 (koopman_py311 environment)
+#    - Activate: koopman_py311\Scripts\activate
+#
+# 3. Development and Training:
+#    - Use Python 3.11 for best performance with PyTorch and NeuroMANCER

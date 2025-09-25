@@ -1,5 +1,7 @@
 terminate(pyenv);
-pyenv('Version','/Users/patrik/miniconda3/envs/neuromancer/bin/python'); % here chenge the path to your library
+pyenv('Version', 'C:\Users\ivadu\AppData\Local\Programs\Python\Python39\python.exe');
+
+%%pyenv('Version','/Users/patrik/miniconda3/envs/neuromancer/bin/python'); % here chenge the path to your library
 
 py.baseline_inference.init()
 

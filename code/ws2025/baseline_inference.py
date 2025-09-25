@@ -140,7 +140,11 @@ def load_problems():
     problem = Problem(nodes, loss)
     problem_noC = Problem(nodes_noC, loss)
 
-    problem.load_state_dict(torch.load('./data/model_baseline.pth'),strict=False)
+   # problem.load_state_dict(torch.load('./data/model_baseline.pth'),strict=False)
+
+    import os
+    model_path = os.path.join(os.path.dirname(__file__), 'data', 'model_baseline.pth')
+    problem.load_state_dict(torch.load(model_path),strict=False)
 
 
 def get_y(x):

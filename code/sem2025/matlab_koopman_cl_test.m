@@ -1,4 +1,8 @@
 clc,clear all,%close all
+
+% Add path to readNPY function
+addpath('../');
+
 % Load Koopman model matrices
 A = double(readNPY('data/A_wC_all.npy'));
 B = double(readNPY('data/B_wC_all.npy'));

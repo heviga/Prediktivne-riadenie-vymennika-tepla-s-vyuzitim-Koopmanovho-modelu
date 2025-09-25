@@ -5,6 +5,10 @@
 % MATLAB mean(u): 54.6108889572
 % MATLAB std(u): 27.6293198476
 clear all, %close all
+
+% Add path to readNPY function
+addpath('../');
+
 %% Load Koopman model matrices
 A = readNPY('data/A_wC_all.npy');%neulozila som ako.m
 B = readNPY('data/B_wC_all.npy');

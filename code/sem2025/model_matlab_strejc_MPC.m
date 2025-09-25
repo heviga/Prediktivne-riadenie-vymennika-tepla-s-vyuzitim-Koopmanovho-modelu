@@ -1,6 +1,16 @@
 %clc; 
 clear all; %close all
 
+% Initialize Python environment for baseline inference
+% terminate(pyenv); % Not needed for InProcess mode
+pyenv('Version', 'C:\Users\ivadu\AppData\Local\Programs\Python\Python39\python.exe');
+
+% Add Python path for baseline_inference
+py.sys.path().append('C:\Users\ivadu\Desktop\9.semestrik\vymennik\Prediktivne-riadenie-vymennika-tepla-s-vyuzitim-Koopmanovho-modelu\code\ws2025');
+
+% Initialize baseline inference
+py.baseline_inference.init();
+
 % Load data
 load('train_data_ident.mat');  % Ytrain, Utrain
 load('test_data_ident.mat');   % Ytest, Utest
@@ -89,9 +99,17 @@ y_meas(:,1) = y_true(:,1) + meas_noise_std * randn(ny,1);
 for t = 1:sim_length
     u_cl(:,t) = controller{x_est(:,t)};%toto zistit ci sem ide u_cl/u_est
 
-    %tieto dva riadky z pythonu    
-    x_true(:,t+1) = A * x_true(:,t) + B * u_cl(:,t);
-    y_true(:,t+1) = C * x_true(:,t+1); %toto bude meranie, treba zistit z modelu?
+    % === BASELINE INFERENCE INTEGRATION ===
+    % Use baseline model for true system dynamics
+    if t == 1
+        % Initialize baseline model with current state
+        py.baseline_inference.get_x(y_true(:,t));
+    end
+    
+    % Get measurement from baseline model (true system)
+    y_baseline = py.baseline_inference.y_plus(u_cl(:,t));
+    y_baseline_array = double(y_baseline);
+    y_true(:,t+1) = y_baseline_array(1); % Extract scalar value
   
     %noised
     y_meas(:,t+1) = y_true(:,t+1) + meas_noise_std * randn(ny,1);
@@ -123,8 +141,8 @@ subplot(3,1,1)
 plot(time, y_true_desc, 'm-', 'LineWidth', 1.5); hold on
 plot(time, y_est_desc, 'b--', 'LineWidth', 2.5);%observer
 xlabel('Time step'); ylabel('Output y (°C)');
-legend('MPC Output','KF Estimate');
-title('Strejc Closed-loop ');
+legend('True output (Baseline)','KF Estimate (Strejc)');
+title('Strejc MPC + Kalman Filter vs Baseline System');
 grid on;grid minor;
 ylim([40 70])
 

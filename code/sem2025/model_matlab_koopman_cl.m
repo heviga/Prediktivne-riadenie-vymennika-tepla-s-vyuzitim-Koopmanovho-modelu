@@ -3,6 +3,17 @@ clc,clear all,%close all
 % Add path to readNPY function
 addpath('../');
 
+% Initialize Python environment for baseline inference
+% terminate(pyenv); % Not needed for InProcess mode
+pyenv('Version', 'C:\Users\ivadu\AppData\Local\Programs\Python\Python39\python.exe');
+
+% Add Python path for baseline_inference
+py.sys.path().append('C:\Users\ivadu\Desktop\9.semestrik\vymennik\Prediktivne-riadenie-vymennika-tepla-s-vyuzitim-Koopmanovho-modelu\code\ws2025');
+
+% Initialize baseline inference
+py.baseline_inference.init();
+
+
 % Load Koopman model matrices
 A = double(readNPY('data/A_wC_all.npy'));
 B = double(readNPY('data/B_wC_all.npy'));
@@ -120,9 +131,18 @@ y_meas(:,1) = y_true(:,1) + meas_noise_std*randn(ny,1);
 for t = 1:sim_length
     u_cl(:,t) = controller{x_est(:,t)};%z odhadovaneho
     
-    %tieto dva riadky z pythonu    
-    x_true(:,t+1) = A * x_true(:,t) + B * u_cl(:,t);
-    y_true(:,t+1) = C * x_true(:,t+1);
+    % === BASELINE INFERENCE INTEGRATION ===
+    % Use baseline model for true system dynamics
+    if t == 1
+        % Initialize baseline model with current state
+        py.baseline_inference.get_x(y_true(:,t));
+    end
+    
+    % Get measurement from baseline model (true system)
+    y_baseline = py.baseline_inference.y_plus(u_cl(:,t));
+    y_baseline_array = double(y_baseline);
+    y_true(:,t+1) = y_baseline_array(1); % Extract scalar value
+    
     y_meas(:,t+1) = y_true(:,t+1) + meas_noise_std * randn(ny,1);
     
     %kf prediction
@@ -155,8 +175,8 @@ plot(time, y_true_desc, 'm-', 'LineWidth', 1.5); hold on;
 plot(time, y_est_desc, 'b--','LineWidth',2.5);
 %plot(time(1:end-1), Ytest, 'k:', 'LineWidth', 1.5);
 xlabel('Time step'); ylabel('Output y (°C)');
-legend('True output','KF estimate');
-title('Koopman Closed-loop with Kalman Filter');
+legend('True output (Baseline)','KF estimate (Koopman)');
+title('Koopman MPC + Kalman Filter vs Baseline System');
 grid on; grid minor;
 
 
@@ -169,7 +189,7 @@ title('Input Comparison');
 grid on; grid minor;
 
 subplot(3,1,3)
-plot(time, y_true_desc,'m-','LineWidth',1.5); hold on
+plot(time, y_true_desc,'m--','LineWidth',1.5); hold on
 plot(time, y_est_desc,'b-','LineWidth',1.5);
 plot(time, (y_meas*x_std + x_mean),'gx');
 xlabel('Time step'); ylabel('y (°C)');
@@ -189,5 +209,5 @@ fprintf('RMSE (Open-loop)  = %.4f\n', rmse_open);% stupen celzia
 fprintf('RMSE (Closed-loop) = %.4f\n', rmse_cl);
 
 
-save('results_koopman.mat', 'y_cl_desc', 'u_cl_desc','x_mean','u_mean');   % From Koopman
+save('results_koopman.mat', 'y_true_desc', 'u_cl_desc','x_mean','u_mean');   % From Koopman
 

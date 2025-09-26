@@ -1,3 +1,4 @@
+% spusti prve pre vytvorenie baseline potom strejc a potom coparison
 clc,clear all,%close all
 
 % Add path to readNPY function
@@ -178,6 +179,7 @@ xlabel('Time step'); ylabel('Output y (°C)');
 legend('True output (Baseline)','KF estimate (Koopman)');
 title('Koopman MPC + Kalman Filter vs Baseline System');
 grid on; grid minor;
+ylim([40 70])
 
 
 subplot(3,1,2)
@@ -196,6 +198,7 @@ xlabel('Time step'); ylabel('y (°C)');
 legend('True output','KF estimate','Noisy measurements');
 title('Measurement vs KF estimate');
 grid on; grid minor;
+ylim([40 70])
 
 %% RMSE Calculation
 e_open = y_open_desc(1:end-1) - Ytest(:);
@@ -209,5 +212,6 @@ fprintf('RMSE (Open-loop)  = %.4f\n', rmse_open);% stupen celzia
 fprintf('RMSE (Closed-loop) = %.4f\n', rmse_cl);
 
 
-save('results_koopman.mat', 'y_true_desc', 'u_cl_desc','x_mean','u_mean');   % From Koopman
+save('results_koopman.mat', 'y_true_desc', 'y_est_desc', 'u_cl_desc','x_mean','u_mean');   % From Koopman
+save('baseline_reference.mat', 'y_true_desc');  % Save baseline for comparison
 

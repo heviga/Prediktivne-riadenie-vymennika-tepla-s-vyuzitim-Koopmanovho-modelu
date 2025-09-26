@@ -1,8 +1,7 @@
 %clc; 
 clear all; %close all
 
-% Initialize Python environment for baseline inference
-% terminate(pyenv); % Not needed for InProcess mode
+% Configure Python environment for baseline inference
 pyenv('Version', 'C:\Users\ivadu\AppData\Local\Programs\Python\Python39\python.exe');
 
 % Add Python path for baseline_inference
@@ -133,7 +132,7 @@ end
 % Descale
 y_true_desc = y_true * x_std + x_mean; % cl
 u_cl_desc = u_cl * u_std + u_mean;
-y_est_desc = x_est * x_std + x_mean;  %kf estimation
+y_est_desc = x_est * x_std + x_mean;  %kf estimation (using Strejc scaling)
 %% --- Plot closed-loop only ---
 time = 0:sim_length;
 figure;
@@ -168,4 +167,5 @@ ylim([40 70])
 rmse_strejc_to_zero = sqrt(mean((y_true_desc(:)).^2)); % RMSE to zero °C
 fprintf('RMSE (Strejc to 0°C) = %.4f °C\n', rmse_strejc_to_zero);
 
-save('results_strejc_to_zero.mat', 'y_true_desc', 'u_cl_desc');
+save('results_strejc_to_zero.mat', 'y_true_desc', 'y_est_desc', 'u_cl_desc');
+save('baseline_reference_strejc.mat', 'y_true_desc');  % Save Strejc baseline for comparison

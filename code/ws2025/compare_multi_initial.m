@@ -104,7 +104,8 @@ Q_kalman = 0.5;
 R_kalman = 0.1;
 P_s = 1;
 
-%% Define initial conditions
+%% Define initial conditions 
+%zmenit len o deltu
 lower = linspace(50,x_mean-5,10);
 higher = linspace(x_mean+5,70,10);
 
@@ -162,8 +163,7 @@ for i = 1:length(y0_vals_scaled)
         % Get measurement from baseline model (true system)
         try
             y_baseline = py.baseline_inference.y_plus(uk(:,t));
-            y_baseline_array = double(y_baseline);
-            y_true_k(:,t+1) = y_baseline_array(1);
+            y_true_k(:,t+1) = double(y_baseline.item());
             
             % Check for NaN in baseline output
             if isnan(y_true_k(:,t+1))
@@ -246,8 +246,7 @@ for i = 1:length(y0_vals_scaled)
         % Get measurement from baseline model (true system)
         try
             y_baseline = py.baseline_inference.y_plus(us(:,t));
-            y_baseline_array = double(y_baseline);
-            y_true_s(:,t+1) = y_baseline_array(1);
+            y_true_s(:,t+1) = double(y_baseline.item());
             
             % Check for NaN in baseline output
             if isnan(y_true_s(:,t+1))
@@ -323,7 +322,7 @@ for i = 1:size(results_strejc,1)
         i, y0_vals(i), results_strejc(i,1), results_strejc(i,2), results_strejc(i,3), results_strejc(i,4), results_strejc(i,5), results_strejc(i,6));
 end
 
-save('results_20x0_MPC_ws2025.mat', 'results_koopman', 'results_strejc', 'y0_vals');
+%save('results_20x0_MPC_ws2025.mat', 'results_koopman', 'results_strejc', 'y0_vals');
 
 %% Visualization of Metrics
 metric_names = {'RMSE', 'Objective function'};
@@ -371,7 +370,7 @@ for i = 1:2
 end
 sgtitle('Control with Initial Conditions Above Steady-State');
 
-saveas(gcf, 'metrics_rmse_obj_last10_ws2025.png');
+%saveas(gcf, 'metrics_rmse_obj_last10_ws2025.png');
 
 %% Summary of metrics
 metrics_labels = {'Sum |u|', 'Sum |y|', 'Sum e (y)', 'Sum e (u)', 'RMSE', 'Objective'};

@@ -8,7 +8,7 @@
 % MATLAB std(u): 23.9910
 
 
-% Discrete A matrix: [[0.97701252]]
+% Discrete A matrix: [[0.98540172]]
 % Discrete B matrix: [[0.03150894]]
 % Discrete C matrix: [[1]]
 % Discrete D matrix: [[0]]
@@ -18,8 +18,8 @@
 %close all, 
 clear all
 %%
-load('train_data_ident.mat');  % Ytrain, Utrain (unscaled)
-load('test_data_ident.mat');
+load('train_data.mat');  % Ytrain, Utrain (unscaled)
+load('test_data.mat');
 
 Ytrain = Ytrain(:);
 Utrain = Utrain(:);
@@ -29,13 +29,13 @@ Utest = Utest(:);
 Yall = [Ytrain; Ytest];
 Uall = [Utrain; Utest];
 
-x_mean = mean(Yall);
+y_mean = mean(Yall);
 x_std = std(Yall);
 u_mean = mean(Uall);
 u_std = std(Uall);
 
 % Scale test data
-x_scaled_test = (Ytest - x_mean) / x_std;
+y_scaled_test = (Ytest - y_mean) / x_std;
 u_scaled_test = (Utest - u_mean) / u_std;
 
 % x_mean = 58.3152398;
@@ -49,8 +49,8 @@ u_scaled_test = (Utest - u_mean) / u_std;
 % tiez ho naskalovat najprv
 
 % Discrete-time Strejc model
-A = 0.97701252;
-B = 0.03150894;
+A = 0.98540172;
+B = 0.01706685;
 C = 1;
 D = 0;
 
@@ -69,7 +69,7 @@ x = sdpvar(repmat(nx,1,N+1), repmat(1,1,N+1));
 
 % Parameters
 x0 = sdpvar(nx,1);   % Initial condition
-r = (70 - x_mean) / x_std;               % Setpoint
+r = (70 - y_mean) / x_std;               % Setpoint
 
 % Cost weights
 Qy = 10;
@@ -108,7 +108,7 @@ sim_steps = length(u_scaled_test);
 x_open = zeros(nx, sim_steps+1);
 y_open = zeros(ny, sim_steps+1);
 
-x_open(:,1) = x_scaled_test(1);
+x_open(:,1) = y_scaled_test(1);
 y_open(:,1) = C * x_open(:,1);
 
 for t = 1:sim_steps
@@ -121,7 +121,7 @@ end
 x_mpc = zeros(nx, sim_steps+1);
 y_mpc = zeros(ny, sim_steps+1);
 u_mpc = zeros(nu, sim_steps);
-x_mpc(:,1) = x_scaled_test(1);% initial
+x_mpc(:,1) = y_scaled_test(1);% initial
 
 
 for t = 1:sim_steps
@@ -133,9 +133,9 @@ end
 %% Descale
 time = 0:sim_steps;
 u_open_desc = u_scaled_test * u_std + u_mean;
-y_open_desc = y_open * x_std + x_mean;
+y_open_desc = y_open * x_std + y_mean;
 u_mpc_desc = u_mpc * u_std + u_mean;
-y_mpc_desc = y_mpc * x_std + x_mean;
+y_mpc_desc = y_mpc * x_std + y_mean;
 y_true = Ytest;
 
 
@@ -160,7 +160,7 @@ grid on; grid minor;
 
 %% save inputs
 u_scaled_all = (Uall - u_mean) / u_std;
-split_idx = length(Uall) - 2000;
+split_idx = length(Utrain);
 
 % Split input
 U_train = Uall(1:split_idx);
@@ -207,8 +207,8 @@ lgd = legend([p1 p2], {'Training Data', 'Testing Data'}, ...
 saveas(gcf, 'C:\Users\ivadu\Desktop\8.semestrik\vymennik\prez\input_changes.png');
 
 %% Save for later plotting
-%save('strejc_open_loop_comparison_data.mat', ...
-%    'y_open_desc', 'y_true', 'time', 'u_open_desc');
+save('strejc_ol_data.mat', ...
+    'y_open_desc', 'y_true', 'time', 'u_open_desc');
 
 min(u_scaled_all)
 max(u_scaled_all)

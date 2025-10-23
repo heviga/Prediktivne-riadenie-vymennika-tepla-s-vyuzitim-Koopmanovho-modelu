@@ -1,23 +1,20 @@
-%PRE TRAIN SET
-% MATLAB mean(x): 58.3152397954
-% MATLAB std(x): 9.0723114709
-
-% MATLAB mean(u): 54.6108889572
-% MATLAB std(u): 27.6293198476
+%mean 58.3377
 clear all, %close all
 
 % Add path to readNPY function
 addpath('../');
+% pre readnpy 
+%addpath 'C:\Users\ivadu\Desktop\9.semestrik\vymennik\Prediktivne-riadenie-vymennika-tepla-s-vyuzitim-Koopmanovho-modelu\code'
 
 %% Load Koopman model matrices
-A = readNPY('data/A_wC_all.npy');%neulozila som ako.m
-B = readNPY('data/B_wC_all.npy');
-C = readNPY('data/C_wC_all.npy');
+A = readNPY('data/A_wC.npy');%neulozila som ako.m
+B = readNPY('data/B_wC.npy');
+C = readNPY('data/C_wC.npy');
 D = 0;
 
 %% Load unscaled training + test data
-load('data/train_data_ident.mat');   % Ytrain, Utrain
-load('data/test_data_ident.mat');    % Ytest, Utest
+load('train_data.mat');   % Ytrain, Utrain
+load('test_data.mat');    % Ytest, Utest
 
 % Reshape if needed
 Ytrain = Ytrain(:);
@@ -83,5 +80,5 @@ ylabel('Input u');
 title('Original Input (Test Data)');
 grid on;
 %%
-% save('koopman_open_loop_comparison.mat', ...
-%     'y_koopman_desc', 'Ytest', 'time', 'Utest');
+ save('koopman_ol.mat', ...
+     'y_koopman_desc', 'Ytest', 'time', 'Utest');

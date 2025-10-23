@@ -26,11 +26,10 @@ u_mean = mean(u); % 63.0883
 y_std = std(y); % 7.1204
 u_std = std(u); % 23.9910
 % 
-% Discrete A matrix: [[0.97701252]]
-% Discrete B matrix: [[0.03150894]]
+% Discrete A matrix: [[0.98540172]]
+% Discrete B matrix: [[0.01706685]]
 % Discrete C matrix: [[1]]
 % Discrete D matrix: [[0]]
-
 
 %% hladanie stepov
 step_indices = find(abs(diff(u)) >1);

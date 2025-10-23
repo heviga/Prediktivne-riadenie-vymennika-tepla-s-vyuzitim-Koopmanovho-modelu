@@ -134,23 +134,17 @@ saveas(gcf, 'C:\Users\ivadu\Desktop\8.semestrik\vymennik\prez\average_step_respo
 
 %% saving data
 
-% Ytrain=x1(t1+1);
-% Utrain=u1(t1+1);
-% % save("train_data.mat", 'Ytrain', 'Utrain')
-% % save("train_data.mat", 'Y', 'U')
-% % save("train_data_ident.mat", 'Ytrain', 'Utrain')
-% % 
-% 
-% Ytest=x2(t2+1);
-% Utest=u2(t2+1);
-% save("test_data.mat", 'Ytest', 'Utest')
-% save("test_data.mat", 'Y', 'U')
-% save("test_data_ident.mat", 'Ytest', 'Utest')
+
+Ytrain=y(1:2000);
+Utrain=u(1:2000);
+
+save("train_data.mat", 'Ytrain', 'Utrain')
+ 
+
+Ytest=y(2001:end);
+Utest=u(2001:end);
+save("test_data.mat", 'Ytest', 'Utest')
 
 
-% Y = x(t+1);
-% U = u(t+1);
-% 
-% save("data.mat", 'Y', 'U')
 
 

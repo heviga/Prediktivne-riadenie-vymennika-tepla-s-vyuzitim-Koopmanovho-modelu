@@ -207,8 +207,8 @@ lgd = legend([p1 p2], {'Training Data', 'Testing Data'}, ...
 saveas(gcf, 'C:\Users\ivadu\Desktop\8.semestrik\vymennik\prez\input_changes.png');
 
 %% Save for later plotting
-save('strejc_ol_data.mat', ...
-    'y_open_desc', 'y_true', 'time', 'u_open_desc');
+%save('strejc_ol_data.mat', ...
+ %   'y_open_desc', 'y_true', 'time', 'u_open_desc');
 
 min(u_scaled_all)
 max(u_scaled_all)

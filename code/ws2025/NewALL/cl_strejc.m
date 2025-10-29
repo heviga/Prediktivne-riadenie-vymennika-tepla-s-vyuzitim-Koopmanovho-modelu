@@ -1,11 +1,11 @@
-%clc; 
+%clc; torch.save(best_model, "./data/model_baseline.pth")
 clear all; %close all
 
 % Configure Python environment for baseline inference
 pyenv('Version', 'C:\Users\ivadu\AppData\Local\Programs\Python\Python39\python.exe');
 
 % Add Python path for baseline_inference
-py.sys.path().append('C:\Users\ivadu\Desktop\9.semestrik\vymennik\Prediktivne-riadenie-vymennika-tepla-s-vyuzitim-Koopmanovho-modelu\code\ws2025');
+py.sys.path().append('C:\Users\ivadu\Desktop\9.semestrik\vymennik\Prediktivne-riadenie-vymennika-tepla-s-vyuzitim-Koopmanovho-modelu\code\ws2025\NewALL');
 
 % Initialize baseline inference
 py.baseline_inference.init();
@@ -30,8 +30,10 @@ u_mean = mean(Uall);
 u_std = std(Uall);
 
 % Discrete Strejc model parameters
+
+
 A = 0.98540172;
-B = 0.01706685;
+B = 0.01640409;
 C = 1;
 D = 0;
 

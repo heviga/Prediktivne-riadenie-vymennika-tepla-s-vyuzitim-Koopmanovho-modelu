@@ -59,7 +59,7 @@ y = zeros(N,3);
 u = zeros(N,3);
 u_prev = [50,50,20];
 
-ys = [42.02774966-53.5, 66.97571158-72.5, 42.5152149-54]
+ys = [42.02774966-53.5, 66.97571158-72.5, 42.5152149-54] 
 us = [65.81566067 54.53911806 25.00000754];
 
 % loading current measurements
@@ -71,6 +71,7 @@ double(pct23.getTag('T1').value)
 % P as P regulator gain
 P_spiral = 12;
 
+%dame 50 percentne u (z umean) 
 %% doprdele - steer your system to undesired location
 for i = 1:5*d
     % Start the timer
@@ -87,11 +88,11 @@ for i = 1:5*d
     y(i,:)
     pct23.setTag('FSV',1);%necceessary?
 
-    value_sp =  P_spiral*(75 - y2); % simple P regulator
-    value_pump =  P_spiral*(60 - y3); % simple P regulator
+    value_sp =  P_spiral*(75 - y2); % simple P regulator teploty a simulink schema rozdiel
+    value_pump =  P_spiral*(60 - y3); % simple P regulator 
 
     % clip actual input to avoid constraints braking
-    u(i,:) = [40,min(max(value_pump, 0), 100),min(max(value_sp, 0), 100)];
+    u(i,:) = [40,min(max(value_pump, 0), 100),min(max(value_sp, 0), 100)]; % feed pump pri ident.
     u(i,:)
     u_prev = u(i,:);
 

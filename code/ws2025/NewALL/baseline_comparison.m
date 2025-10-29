@@ -1,5 +1,6 @@
 % Baseline Comparison: Koopman vs Strejc MPC
 % Simple comparison using saved results from both model files
+%ofsst na kalmanovi???
 
 clc, clear all, %close all
 
@@ -28,7 +29,7 @@ u_std = std(Uall);
 
 % Load Koopman results with baseline
 fprintf('Loading Koopman results...\n');
-load('results_koopman.mat');
+load('results_koopman_to_zero.mat');
 load('baseline_reference.mat');  % Koopman baseline
 koop_time = 0:length(y_true_desc)-1;
 koop_y_true_desc = y_true_desc;  % Koopman baseline
@@ -72,6 +73,21 @@ title('Strejc MPC + Kalman Filter vs Baseline System');
 grid on; grid minor;
 ylim([50 68]);
 
+figure();
+
+% Jediný graf: Koopman MPC + KF a Strejc MPC + KF vs Baseline
+plot(koop_time, koop_y_true_desc, 'm-', 'LineWidth', 1.5, 'DisplayName', 'True output (Baseline)'); hold on;
+plot(koop_time, koop_y_est_desc, 'b--', 'LineWidth', 2.5, 'DisplayName', 'KF estimate (Koopman)');
+plot(strejc_time, strejc_y_est_desc, 'r--', 'LineWidth', 2.5, 'DisplayName', 'KF estimate (Strejc)');
+
+% Osi, legenda a popisy
+xlabel('Time step');
+ylabel('Output y (°C)');
+legend('Location', 'best');
+yline(x_mean, 'k:', 'DisplayName', 'Mean temperature');
+title('Koopman vs Strejc MPC + Kalman Filter (Baseline Comparison)');
+grid on; grid minor;
+ylim([50 60]);
 
 %%
 Qy = 10;

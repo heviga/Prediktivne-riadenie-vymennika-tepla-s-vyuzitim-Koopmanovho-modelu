@@ -130,12 +130,12 @@ saveas(gcf, 'C:\Users\ivadu\Desktop\8.semestrik\vymennik\prez\average_step_respo
 Ytrain=y(1:2000);
 Utrain=u(1:2000);
 
-save("train_data.mat", 'Ytrain', 'Utrain')
+%save("train_data.mat", 'Ytrain', 'Utrain')
  
 
 Ytest=y(2001:end);
 Utest=u(2001:end);
-save("test_data.mat", 'Ytest', 'Utest')
+%save("test_data.mat", 'Ytest', 'Utest')
 
 
 

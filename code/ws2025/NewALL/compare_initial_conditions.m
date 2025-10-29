@@ -8,7 +8,7 @@ addpath('../');
 
 % Initialize Python environment for baseline inference
 pyenv('Version', 'C:\Users\ivadu\AppData\Local\Programs\Python\Python39\python.exe');
-py.sys.path().append('C:\Users\ivadu\Desktop\9.semestrik\vymennik\Prediktivne-riadenie-vymennika-tepla-s-vyuzitim-Koopmanovho-modelu\code\ws2025');
+py.sys.path().append('C:\Users\ivadu\Desktop\9.semestrik\vymennik\Prediktivne-riadenie-vymennika-tepla-s-vyuzitim-Koopmanovho-modelu\code\ws2025\NewALL');
 py.baseline_inference.init();
 
 %% Load models
@@ -18,9 +18,12 @@ B_k = double(readNPY('data/B_wC.npy'));
 C_k = double(readNPY('data/C_wC.npy'));
 D_k = 0;
 
+
+
+
 % Strejc model (from model_matlab_strejc_MPC)
-A_s = 0.98540172; 
-B_s = 0.01706685;  % Updated B parameter from model_matlab_strejc_MPC
+A_s = 0.98540172;
+B_s = 0.01640409;
 C_s = 1;
 D_s = 0;
 

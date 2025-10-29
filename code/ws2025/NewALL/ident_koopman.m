@@ -1,4 +1,4 @@
-%mean 58.3377
+%mean 58.3377  torch.save(best_model, "./data/model_baseline.pth")
 clear all, %close all
 
 % Add path to readNPY function
@@ -80,5 +80,5 @@ ylabel('Input u');
 title('Original Input (Test Data)');
 grid on;
 %%
- save('koopman_ol.mat', ...
-     'y_koopman_desc', 'Ytest', 'time', 'Utest');
+% save('koopman_ol.mat', ...
+ %    'y_koopman_desc', 'Ytest', 'time', 'Utest');

@@ -45,13 +45,13 @@ pct23.setTag('Pump1',100)
 
 %% Runtime configuration
 sim_minutes = 12;           % total runtime in minutes
-setpoint_T4 =58.3377;           % desired temperature setpoint (°C)
+%setpoint_T4 =58.3377;           % desired temperature setpoint (°C)
 Ts_runtime = Ts;            % reuse device sampling period
 num_steps = sim_minutes * 60 / Ts_runtime; %celkovy cas
 P_spiral = 12;
 
-%x_mean =  59.0676 + offset
-ys = [59.0676 - 59.0676]; %nam];    % offsets for T4 and T2 xmean - xreal
+%x_mean =  59.0676 + offset 
+ys = [59.0676 - 59.824]; %nam];    % offset for T4 and T2 xmean - xreal
 %us = [65.8447];           % steady-state inputs [Pump2, Heater]
 % Auxiliary actuators held at steady state
 Pump1_const = 50;
@@ -81,31 +81,30 @@ double(pct23.getTag('T1').value)
 
 
 
-for k = 1:num_steps
-    tic;
-    time_log(k) = datestr(now, 'yyyy-mm-dd HH:MM:SS.FFF');
-
-    % --- Measurements ---
-    T4 = double(pct23.getTag('T4').value);
-    T2 = double(pct23.getTag('T2').value);
-    y_T4(k) = T4;
-    y_T2(k) = T2;
-
-    % --- Compute Heater command (simple P regulator) ---
-    value_sp = P_spiral * (76 - T2); % P regulator for spiral
-    value_sp = min(max(value_sp, 0), 100);
-
-    % --- Koopman MPC control for Pump2 ---
-    % Add offset correction relative to steady-state
-    y_offset =(T4 + ys);
-    u_cmd = control_koopman(y_offset)%% Open ELab in MANAGER mode
+% for k = 1:num_steps
+%     tic;
+%     time_log(k) = datestr(now, 'yyyy-mm-dd HH:MM:SS.FFF');
+% 
+%     % --- Measurements ---
+%     T4 = double(pct23.getTag('T4').value);
+%     T2 = double(pct23.getTag('T2').value);
+%     y_T4(k) = T4;
+%     y_T2(k) = T2;
+% 
+%     % --- Compute Heater command (simple P regulator) ---
+%     value_sp = P_spiral * (76 - T2); % P regulator for spiral
+%     value_sp = min(max(value_sp, 0), 100);
+% 
+%     % --- Koopman MPC control for Pump2 ---
+%     % Add offset correction relative to steady-state
+%     y_offset =(T4 + ys);
+%     u_cmd = control_koopman(y_offset)%% Open ELab in MANAGER mode
 % volannie u_cmd = control_koopman2(T4, setpoint_T4);
                               % the device 'pct23'.
 %skoky trenovacie: 30,50,70,90,70,50,30
 %skoky testovacie: u = 60,30,80,100
 
-elab_manager = ELab();
-elab_manager.list();
+
 % s u_mean namerat x -> x_REALmean, z x real offsety
 %% Open ELab in CONTROL mode
 %  In this mode, you have full control over selected device
@@ -144,7 +143,7 @@ pct23.setTag('FSV',1);
 pct23.setTag('Pump1',100)
 
 %% Runtime configuration
-sim_minutes = 12;           % total runtime in minutes
+sim_minutes = 5;           % total runtime in minutes
 setpoint_T4 =58.3377;           % desired temperature setpoint (°C)
 Ts_runtime = Ts;            % reuse device sampling period
 num_steps = sim_minutes * 60 / Ts_runtime; %celkovy cas
@@ -224,7 +223,7 @@ end
 log_data = table((1:num_steps).', time_log, y_T4, y_T2, u_Pump2, u_Heater, ...
     'VariableNames', {'step','timestamp','T4','T2','Pump2','Heater'});
 
-save('runtime_log_feed_heater.mat','log_data','setpoint_T4','Pump1_const','ys','us');
+save('runtime_log_feed_heater.mat','log_data','setpoint_T4','Pump1_const','ys');
 
 pct23.off();
 pct23.setTag('FSV',1);
@@ -235,47 +234,11 @@ control_koopman(0, struct('reset', true));
 % Persist logs for offline analysis
 log_data = table((1:num_steps).', time_log, y_T4, u_Pump2, ...
     'VariableNames', {'step','timestamp','T4','Pump2'});
-save('runtime_log.mat','log_data','setpoint_T4','Pump1_const','Heater_const');
+save('runtime_log.mat','log_data','setpoint_T4','Pump1_const');
 
 %terminate(pyenv);
 pct23.off();
 pct23.setTag('FSV',1);
 control_koopman(0, struct('reset', true));
-    u_cmd = min(max(u_cmd, 0), 100);
-    u_Pump2(k) = u_cmd(1);
-
-    % --- Apply control to device ---
-    pct23.setTag('Pump2', u_Pump2(k));
-    pct23.setTag('Pump1', Pump1_const);
-    pct23.setTag('Heater', value_sp);
-    pct23.setTag('FSV', 1);
-
-    % --- Maintain sampling time ---
-    elapsedTime = toc;
-    pause(max(0, Ts_runtime - elapsedTime));
-end
-
-%% ===============================
-%   LOGGING AND CLEANUP
-%   ===============================
-
-log_data = table((1:num_steps).', time_log, y_T4, y_T2, u_Pump2, u_Heater, ...
-    'VariableNames', {'step','timestamp','T4','T2','Pump2','Heater'});
-
-save('runtime_log_feed_heater.mat','log_data','setpoint_T4','Pump1_const','ys','us');
-
-pct23.off();
-pct23.setTag('FSV',1);
-control_koopman(0, struct('reset', true));
 
 
-%zmenit nazov pri dalsich skokoch
-% Persist logs for offline analysis
-log_data = table((1:num_steps).', time_log, y_T4, u_Pump2, ...
-    'VariableNames', {'step','timestamp','T4','Pump2'});
-save('runtime_log.mat','log_data','setpoint_T4','Pump1_const','Heater_const');
-
-%terminate(pyenv);
-pct23.off();
-pct23.setTag('FSV',1);
-control_koopman(0, struct('reset', true));

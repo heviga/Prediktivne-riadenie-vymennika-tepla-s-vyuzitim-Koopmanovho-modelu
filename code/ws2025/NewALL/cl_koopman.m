@@ -4,6 +4,19 @@ clc,clear all,%close all
 % Add path to readNPY function
 addpath('../');
 
+
+
+
+
+
+
+
+
+
+
+
+
+
 % Initialize Python environment for baseline inference
 % terminate(pyenv); % Not needed for InProcess mode
 pyenv('Version', 'C:\Users\ivadu\AppData\Local\Programs\Python\Python39\python.exe');

@@ -36,8 +36,8 @@ class Koopman_control(nn.Module):
         return x
 
 def load_problems():
-    nx_koopman = 80
-    layers = [60, 120, 180]
+    nx_koopman = 240
+    layers = [80, 160, 240]
     ny = 1
     nsteps = 80   
     nu = 1 

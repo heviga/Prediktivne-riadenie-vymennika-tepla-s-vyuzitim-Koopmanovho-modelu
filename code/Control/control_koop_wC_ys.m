@@ -59,6 +59,7 @@ y = zeros(N,3);
 u = zeros(N,3);
 u_prev = [50,50,20];
 
+%offsety, otot updatujeme kazde meranie
 ys = [42.02774966-53.5, 66.97571158-72.5, 42.5152149-54] 
 us = [65.81566067 54.53911806 25.00000754];
 
@@ -138,7 +139,6 @@ for i = 5*d:12*d
     pause(max(0, 1 - elapsedTime));
 
 end
-
 
 
 %terminate(pyenv);

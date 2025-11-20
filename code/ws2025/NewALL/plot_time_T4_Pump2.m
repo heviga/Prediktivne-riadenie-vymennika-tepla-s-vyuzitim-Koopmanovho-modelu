@@ -5,10 +5,13 @@ koop_file = 'runtime_log_koop.mat';
 strejc_file = 'runtime_log_strejc.mat';
 time_format = 'yyyy-MM-dd HH:mm:ss.SSS';
 required_vars = {'timestamp','T4','Pump2'};
+Q_cost = 10;
+R_cost = 1;
+x_mean_target = 59.0676; % target temperature
 
 % --- Koopman log ---
-S = load(koop_file);
-log_data = S.log_data;
+S_koop = load(koop_file);
+log_data = S_koop.log_data;
 missing = setdiff(required_vars, log_data.Properties.VariableNames);
 assert(isempty(missing), 'Koopman log missing vars: %s', strjoin(missing, ', '));
 
@@ -22,8 +25,8 @@ T4_koop = log_data.T4;
 Pump_koop = log_data.Pump2;
 
 % --- Strejc log ---
-S = load(strejc_file);
-log_data = S.log_data;
+S_strejc = load(strejc_file);
+log_data = S_strejc.log_data;
 missing = setdiff(required_vars, log_data.Properties.VariableNames);
 assert(isempty(missing), 'Strejc log missing vars: %s', strjoin(missing, ', '));
 
@@ -59,3 +62,26 @@ title('Pump2 Actuation');
 legend({'Koopman','Strejc'}, 'Location','southeast');
 
 sgtitle('Koopman vs Strejc control logs');
+
+%% Metrics
+target_koop = x_mean_target;
+target_strejc = x_mean_target;
+
+rmse_koop = sqrt(mean((T4_koop - target_koop).^2));
+rmse_strejc = sqrt(mean((T4_strejc - target_strejc).^2));
+
+obj_koop = sum(Q_cost*(T4_koop - target_koop).^2 + R_cost*(Pump_koop).^2);
+obj_strejc = sum(Q_cost*(T4_strejc - target_strejc).^2 + R_cost*(Pump_strejc).^2);
+
+sum_pump_koop = sum(Pump_koop);
+sum_pump_strejc = sum(Pump_strejc);
+
+metrics = table( ...
+    {'Koopman'; 'Strejc'}, ...
+    [rmse_koop; rmse_strejc], ...
+    [obj_koop; obj_strejc], ...
+    [sum_pump_koop; sum_pump_strejc], ...
+    'VariableNames', {'Controller','RMSE_T4','Objective','SumPump2'});
+
+disp('--- Performance metrics ---');
+disp(metrics);

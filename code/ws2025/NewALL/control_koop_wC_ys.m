@@ -223,22 +223,13 @@ end
 log_data = table((1:num_steps).', time_log, y_T4, y_T2, u_Pump2, u_Heater, ...
     'VariableNames', {'step','timestamp','T4','T2','Pump2','Heater'});
 
-save('runtime_log_feed_heater.mat','log_data','setpoint_T4','Pump1_const','ys');
+save('runtime_log_koop.mat','log_data','setpoint_T4','Pump1_const','ys');
 
 pct23.off();
 pct23.setTag('FSV',1);
 control_koopman(0, struct('reset', true));
+
 
 
 %zmenit nazov pri dalsich skokoch
-% Persist logs for offline analysis
-log_data = table((1:num_steps).', time_log, y_T4, u_Pump2, ...
-    'VariableNames', {'step','timestamp','T4','Pump2'});
-save('runtime_log.mat','log_data','setpoint_T4','Pump1_const');
-
-%terminate(pyenv);
-pct23.off();
-pct23.setTag('FSV',1);
-control_koopman(0, struct('reset', true));
-
-
+%

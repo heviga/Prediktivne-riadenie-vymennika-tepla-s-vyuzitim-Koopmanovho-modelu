@@ -32,7 +32,7 @@ if isempty(initialized) || ~initialized
     data = load('results_koopman_to_zero.mat');
     x_mean = data.x_mean;
     u_mean = data.u_mean;
-
+% 
     % odhadneme štandardné odchýlky z uložených dát
     x_std = std(data.y_true_desc(:));
     u_std = std(data.u_cl_desc(:));

@@ -1,8 +1,9 @@
 %% Open ELab in MANAGER mode
 % elab_manager = ELab();
 % elab_manager.list();
-setpoint_preheat = 50;  % cieľová teplota pred Strejc
+setpoint_preheat = 68;  % cieľová teplota pred Strejc
 hold_loops = 5;        % musí byť na setpointe po 10 cykloch
+filename = 'steps/runtime_strejc10.mat';
 
 [y_T4_pre, y_T2_pre, u_Pump2_pre] = preheat_PI(pct23, setpoint_preheat, Ts, P_spiral, Pump1_const, hold_loops);
 
@@ -94,7 +95,9 @@ end
 log_data = table((1:num_steps).', time_log, y_T4, u_Pump2, ...
     'VariableNames', {'step','timestamp','T4','Pump2'});
 
-save('steps/runtime_log_strejc3.mat','log_data','setpoint_T4','Pump1_const');
+save(filename, 'log_data', 'Pump1_const', 'ys');
+
+disp(['data saved as ', filename]);
 
 pct23.off();
 pct23.setTag('FSV',1);

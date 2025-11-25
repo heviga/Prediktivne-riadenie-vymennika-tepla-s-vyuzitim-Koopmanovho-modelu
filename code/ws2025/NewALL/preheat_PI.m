@@ -21,10 +21,10 @@ function [y_T4, y_T2, u_Pump2] = preheat_PI(pct23, setpoint_T4, Ts, P_spiral, Pu
     Pump2_base = 50;
     Pump2_min = 0;
     Pump2_max = 100;
-    Kp_pump2 = 8.0;
+    Kp_pump2 = 6.0;
     Ki_pump2 = 0.8;
     integral_error = 0;
-    tolerance = 0.1;  % ±0.1 °C okolo setpointu
+    tolerance = 0.15;  % ±0.1 °C okolo setpointu
 
     % Preallocate logs (max 20 min)
     max_steps = 20*60/Ts;

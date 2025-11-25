@@ -1,6 +1,6 @@
 hold_loops = 5;        % T4 musí byť na setpointe 5 loopov po sebe
-setpoint_preheat = 50; % cieľová teplota pred Koopmanom
-
+setpoint_preheat = 68; % cieľová teplota pred Koopmanom
+filename = 'steps/runtime_log_koop10.mat';
 [y_T4_pre, y_T2_pre, u_Pump2_pre] = preheat_PI(pct23, setpoint_preheat, Ts, P_spiral, Pump1_const, hold_loops);
 
 T4_init = y_T4_pre(end);
@@ -65,8 +65,12 @@ end
 %% ====== Logging and cleanup ======
 log_data = table((1:num_steps).', time_log, y_T4, y_T2, u_Pump2, ...
     'VariableNames', {'step','timestamp','T4','T2','Pump2'});
-save('steps/runtime_log_koop3.mat','log_data','Pump1_const','ys');
-disp('data saved');
+
+
+save(filename, 'log_data', 'Pump1_const', 'ys');
+
+disp(['data saved as ', filename]);
+
 
 pct23.off();
 control_koopman(0, struct('reset', true));

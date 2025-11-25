@@ -18,7 +18,7 @@ pct23.setTag('Pump1',100);
 
 %% Runtime configuration
 sim_minutes = 7;
-setpoint_T4 = 58.3377;    % optional, kept for compatibility with original save
+%setpoint_T4 = 58.3377;    % optional, kept for compatibility with original save
 Ts_runtime = Ts;
 num_steps = sim_minutes * 60 / Ts_runtime;
 P_spiral = 12;
@@ -26,7 +26,7 @@ P_spiral = 12;
  % ******** PUMP2 KONŠTANTA  ***************************
 % Constants
 Pump1_const = 50;
-Pump2_const = 50;     % ******** PUMP2 KONŠTANTA 70 ********
+Pump2_const = 65.8447;     % ******** PUMP2 KONŠTANTA 70 ********
 
 
 

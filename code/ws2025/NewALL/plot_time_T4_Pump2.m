@@ -1,8 +1,8 @@
 %% Plot Koopman vs Strejc logs (T4 & Pump2)
 % Each MAT file must contain table `log_data` with timestamp, T4, Pump2.
 
-koop_file = 'steps/runtime_log_koop.mat';
-strejc_file = 'steps/runtime_log_strejc.mat';
+koop_file = 'steps/runtime_log_koop10.mat';
+strejc_file = 'steps/runtime_log_strejc10.mat';
 time_format = 'yyyy-MM-dd HH:mm:ss.SSS';
 required_vars = {'timestamp','T4','Pump2'};
 Q_cost = 10;
@@ -87,8 +87,8 @@ disp('--- Performance metrics ---');
 disp(metrics);
 
 %% Save metrics
-metrics_file_mat = 'steps/metrics_comparison.mat';
-metrics_file_csv = 'steps/metrics_comparison.csv';
+metrics_file_mat = 'steps/metrics_comparison10.mat';
+metrics_file_csv = 'steps/metrics_comparison10.csv';
 
 save(metrics_file_mat, 'metrics');
 writetable(metrics, metrics_file_csv);

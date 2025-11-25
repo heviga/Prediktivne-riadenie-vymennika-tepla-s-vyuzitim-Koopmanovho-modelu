@@ -100,5 +100,5 @@ xmean_T4 = mean(y_T4);
 xmean_T2 = mean(y_T2);
 
 fprintf('\n=== XMEAN RESULTS ===\n');
-fprintf('xmean T4 = %.4f °C\n ', xmean_T4);
+fprintf('xmean T4 = %.4f °C\n ', xmean_T4(-100:end));
 fprintf('umean pump2 = %.4f °C\n ', u_mean); % 65.8447

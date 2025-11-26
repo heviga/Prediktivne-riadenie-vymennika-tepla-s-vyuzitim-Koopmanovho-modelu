@@ -24,7 +24,7 @@ sim_minutes = 5;            % total runtime in minutes
 Ts_runtime = Ts;            % reuse device sampling period
 num_steps = sim_minutes * 60 / Ts_runtime;
 P_spiral = 12;
-ys = [59.0676 - 64.1115];   % offset T4 () - xmean z ident
+ys = [59.0676 - 63.8084];   % offset T4 () - xmean z ident
 Pump1_const = 50;
 
 % Preallocate logs

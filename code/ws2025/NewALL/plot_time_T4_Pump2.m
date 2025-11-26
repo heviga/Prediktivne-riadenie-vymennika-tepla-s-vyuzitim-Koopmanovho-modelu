@@ -7,7 +7,7 @@ time_format = 'yyyy-MM-dd HH:mm:ss.SSS';
 required_vars = {'timestamp','T4','Pump2'};
 Q_cost = 10;
 R_cost = 1;
-x_mean_target = 59.0676; % target temperature
+x_mean_target = 59.0676 + abs(59.0676 - 63.8084) % target temperature
 
 % --- Koopman log ---
 S_koop = load(koop_file);

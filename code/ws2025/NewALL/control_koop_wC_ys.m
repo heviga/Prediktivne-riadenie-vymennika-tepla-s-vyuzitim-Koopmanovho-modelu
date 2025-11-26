@@ -1,6 +1,6 @@
 hold_loops = 5;        % T4 musí byť na setpointe 5 loopov po sebe
 setpoint_preheat = 68; % cieľová teplota pred Koopmanom
-filename = 'steps/runtime_log_koop10.mat';
+filename = 'steps/2611runtime_log_koop8.mat';
 [y_T4_pre, y_T2_pre, u_Pump2_pre] = preheat_PI(pct23, setpoint_preheat, Ts, P_spiral, Pump1_const, hold_loops);
 
 T4_init = y_T4_pre(end);
@@ -11,7 +11,7 @@ sim_minutes = 5;            % total runtime in minutes
 Ts_runtime = Ts;            % reuse device sampling period
 num_steps = sim_minutes * 60 / Ts_runtime;
 P_spiral = 12;
-ys = [59.0676 - 64.1115];   % offset T4 () - xmean z ident
+ys = [59.0676 - 63.8084];   % offset T4 () - xmean z ident
 Pump1_const = 50;
 
 % Preallocate logs

@@ -34,7 +34,7 @@ u_Heater = zeros(num_steps,1);
 u_Pump2 = zeros(num_steps,1);
 time_log = strings(num_steps,1);
 
-ys = [59.0676 - 64.1115];
+ys = [59.0676 - 63.8084];
 Pump1_const = 50;
 control_strejc(0, struct('reset', true));
 

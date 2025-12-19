@@ -1,22 +1,8 @@
-% Steady-state gain 1.1691
-% Time constant τ ≈ 68 samples
-
-% MATLAB mean(y):  58.3377
-% MATLAB std(y): 7.1204
-
-% MATLAB mean(u): 63.0883
-% MATLAB std(u): 23.9910
-
-
-% Discrete A matrix: [[0.98540172]]
-% Discrete B matrix: [[0.03150894]]
-% Discrete C matrix: [[1]]
-% Discrete D matrix: [[0]]
 
 %#ucka potrebujeme descalovat u = u_scaled * u_std + u_mean;
 %% 
 %close all, 
-clear all
+%clear all
 %%
 load('train_data.mat');  % Ytrain, Utrain (unscaled)
 load('test_data.mat');
@@ -38,19 +24,19 @@ u_std = std(Uall);
 y_scaled_test = (Ytest - y_mean) / x_std;
 u_scaled_test = (Utest - u_mean) / u_std;
 
-% x_mean = 58.3152398;
-% x_std = 9.07091605;
-% 
-% u_mean = 54.6108889572;
-% u_std = 27.6293198476;
+
+%  59.0676 - z ident
+% u_mean = mean(u); % 65.8447 - z ident
 
 
 %% 1. strejc a mpc na strejca 
 % tiez ho naskalovat najprv
-
+K = 1.1237;
+Ts = 1;
+tau = 68;
 % Discrete-time Strejc model
-A = 0.98540172;
-B = 0.01706685;
+A = exp(-Ts/tau); %0.985401721021654
+B = K*(1 - A);%0.016404086087968
 C = 1;
 D = 0;
 
@@ -92,7 +78,7 @@ for k = 1:N
 
     % Cost (tracking + regularization)
     yk = C*x{k};      % Output
-    objective = objective + Qy*(yk - r)^2 + Ru*u{k}^2;
+    objective = objective + Qy*(yk)^2 + Ru*u{k}^2;
 end
 
 % Options for the solver
@@ -137,6 +123,26 @@ y_open_desc = y_open * x_std + y_mean;
 u_mpc_desc = u_mpc * u_std + u_mean;
 y_mpc_desc = y_mpc * x_std + y_mean;
 y_true = Ytest;
+
+%% Open-loop model accuracy (RMSE)
+% Align lengths
+y_model_ol = y_open_desc(2:end);   % model output (skip initial state)
+y_meas = y_true(:);                % measured output
+
+rmse_ol = sqrt(mean((y_model_ol - y_meas).^2));
+
+fprintf('Open-loop RMSE (Strejc model): %.3f °C\n', rmse_ol);
+
+%% Overall open-loop RMSE (entire dataset)
+% Use descaled signals in physical units
+
+y_model = y_open_desc(2:end);   % model output
+y_model = y_model(:);
+y_meas  = y_true(:);            % measured output
+
+rmse_openloop = sqrt(mean((y_model - y_meas).^2));
+
+fprintf('Overall open-loop RMSE (Strejc): %.3f °C\n', rmse_openloop);
 
 
 %% plot
@@ -204,7 +210,7 @@ lgd = legend([p1 p2], {'Training Data', 'Testing Data'}, ...
 
 
 % Save figure
-saveas(gcf, 'C:\Users\ivadu\Desktop\8.semestrik\vymennik\prez\input_changes.png');
+saveas(gcf, 'figs\input_changes.png');
 
 %% Save for later plotting
 %save('strejc_ol_data.mat', ...

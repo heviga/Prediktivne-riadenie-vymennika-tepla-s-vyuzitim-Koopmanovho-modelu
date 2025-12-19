@@ -89,7 +89,7 @@ u_test_desc = Utest_scaled * u_std + u_mean;
 %% Closed-loop Koopman control (MPC) with kalman filter
 Qy = 10;
 Qu = 1;
-N = 40;
+N = 20;
 
 
 umin = (20 - u_mean) / u_std;
@@ -226,6 +226,6 @@ fprintf('RMSE (Open-loop)  = %.4f\n', rmse_open);% stupen celzia
 fprintf('RMSE (Closed-loop) = %.4f\n', rmse_cl);
 
 
-save('results_koopman_to_zero.mat', 'y_true_desc', 'y_est_desc', 'u_cl_desc','x_mean','u_mean','u_cl',"y_true");   % From Koopman
-save('baseline_reference.mat', 'y_true_desc');  % Save baseline for comparison
+% save('results_koopman_to_zero.mat', 'y_true_desc', 'y_est_desc', 'u_cl_desc','x_mean','u_mean','u_cl',"y_true");   % From Koopman
+% save('baseline_reference.mat', 'y_true_desc');  % Save baseline for comparison
 

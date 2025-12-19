@@ -37,9 +37,10 @@ Utest_scaled = (Utest - u_mean) / u_std;
 
 %% Initial condition from test data (scaled)
 y0 = Ytest_scaled(1);         % first scaled output from test set
-%x0 = C \ y0;    
-x0 = zeros(size(A,1),1); 
-x0(1) = y0;    % Approximate latent state (assumes C is invertible)
+%x0 = C \ y0;   
+x0 = pinv(C) * y0;             % least-squares solution C*x0 ≈ y0
+% x0 = zeros(size(A,1),1); 
+% x0(1) = y0;    % Approximate latent state (assumes C is invertible)
 
 %% Koopman rollout
 sim_length = length(Utest_scaled);
@@ -59,6 +60,35 @@ end
 
 %% Descale output
 y_koopman_desc = y_koopman * x_std + x_mean;
+
+%% Open-loop RMSE (Koopman model)
+
+% Align lengths (skip initial condition)
+% y_model_ol = y_koopman_desc(2:end);   % Koopman prediction
+% y_meas     = Ytest(:);                % True measured output
+
+% % Make sure shapes match
+% y_model_ol = y_model_ol(:);
+% y_meas     = y_meas(:);
+
+% RMSE computation
+%% Open-loop RMSE (Koopman model) — CORRECT
+
+% Remove initial condition and align lengths
+y_model_ol = y_koopman_desc(2:end);   % 1001 samples
+y_meas     = Ytest;                   % 1001 samples
+
+% Force column vectors
+y_model_ol = y_model_ol(:);
+y_meas     = y_meas(:);
+
+% Final sanity check
+assert(all(size(y_model_ol) == size(y_meas)), 'Signals not aligned!');
+
+% RMSE
+rmse_koopman = sqrt(mean((y_model_ol - y_meas).^2));
+
+fprintf('Open-loop RMSE (Koopman model): %.3f °C\n', rmse_koopman);
 
 %% Plot
 time = 0:sim_length;

@@ -145,6 +145,133 @@ Ytest=y(2001:end);
 Utest=u(2001:end);
 save("test_data.mat", 'Ytest', 'Utest')
 
+%% 
+%% Raw measurement overview
+figure('Color','w','Name','Raw Identification Data');
+
+subplot(2,1,1);
+plot(t, u, 'LineWidth', 1.2);
+grid on; box on;
+ylabel('Pump F speed (\%)');
+title('Input signal');
+
+subplot(2,1,2);
+plot(t, y, 'LineWidth', 1.2);
+grid on; box on;
+xlabel('Time (s)');
+ylabel('Outlet temperature $T_4$ ($^\circ$C)','Interpreter','latex');
+title('Measured output');
+
+%% Step detection
+step_indices = find(abs(diff(u)) > 1);
+num_steps = numel(step_indices);
+
+%% Signal normalization
+y_scaled = (y - y_mean) / y_std;
+u_scaled = (u - u_mean) / u_std;
+
+delay = 10;          % samples after step
+max_length = 250;    % step response length
+
+y_steps = NaN(num_steps, max_length);
+
+%% Normalized step responses
+t_end = t(end);   % common time limit
+
+% Raw measured signals used for identification
+fig1 = figure('Color','w','Name','Raw Identification Measurements');
+
+subplot(2,1,1);
+plot(t, u, 'LineWidth', 1.2);
+grid on; box on;
+xlim([0 t_end]);
+ylim([0 101])
+ylabel('Pump F speed (\%)');
+title('Input signal');
+
+subplot(2,1,2);
+plot(t, y, 'LineWidth', 1.2);
+xlim([0 t_end]);
+grid on; box on;
+xlabel('Time (s)');
+ylabel('Outlet temperature $T_4$ ($^\circ$C)', 'Interpreter','latex');
+title('Measured output');
+
+saveas(fig1, 'figs/fig_raw_measurements.png');
+
+
+colors = lines(min(num_steps,10));
+
+fig2 = figure('Color','w','Name','Normalized Step Responses'); 
+hold on; grid on; box on;
+
+xlabel('Time since step (s)');
+ylabel('Normalized output');
+title('Normalized step responses');
+
+color_idx = 1;   % index do 'colors'
+
+for i = 1:num_steps
+    idx = step_indices(i);
+
+    % Bounds check
+    if idx-1 < 1 || idx+delay+max_length-1 > length(u)
+        continue
+    end
+
+    % Zmena vstupu
+    du = u_scaled(idx+delay) - u_scaled(idx-1);
+    if abs(du) < eps
+        continue
+    end
+
+    % Výsek výstupu okolo skoku
+    y_step = y_scaled(idx:idx+max_length-1);
+
+    % Normalizácia na jednotkový skok
+    y_norm = (y_step - y_scaled(idx-1)) / abs(du);
+    if du < 0
+        y_norm = -y_norm;
+    end
+
+    % Uloženie do matice
+    y_steps(i,:) = y_norm(:)';
+
+    % Výber farby (cyklicky)
+    c = colors(color_idx, :);
+    color_idx = color_idx + 1;
+    if color_idx > size(colors,1)
+        color_idx = 1;
+    end
+
+    % Kreslenie
+    plot(0:max_length-1, y_norm, 'Color', c, 'LineWidth', 1);
+end
+
+saveas(fig2, 'figs/fig_normalized_step_responses.png');
+%%Average normalized step response
+avg_step = mean(y_steps, 1, 'omitnan');
+
+fig3 = figure('Color','w','Name','Average Step Response');
+plot(0:max_length-1, avg_step, 'k', 'LineWidth', 2);
+grid on; box on;
+
+xlabel('Time since step (s)');
+ylabel('Normalized output');
+title('Average normalized step response');
+
+%%Strejc model parameter estimation
+K = mean(avg_step(end-6:end), 'omitnan');
+target = 0.632 * K;
+tau_idx = find(avg_step >= target, 1, 'first');
+
+hold on;
+yline(target, '--', '$63.2\%$ of $K$', 'Interpreter','latex');
+if ~isempty(tau_idx)
+    xline(tau_idx, '--r', '$T$', 'Interpreter','latex');
+end
+legend('Average response','Location','best');
+saveas(fig3, 'figs/fig_average_step_response.png');
 
 
 

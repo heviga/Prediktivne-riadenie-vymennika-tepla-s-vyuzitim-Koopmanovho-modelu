@@ -36,7 +36,7 @@ if isempty(initialized) || ~initialized
     u_std = std(data.u_cl_desc(:));
 
     % --- MPC settings ---
-    N = 40;        
+    N = 20;        
     Qy = 10;       
     Qu = 1;        
 
@@ -78,7 +78,7 @@ if isempty(initialized) || ~initialized
 end
 
 %% === SCALE INPUTS ===
-y_scaled = (y_meas - x_mean)/x_std;
+% y_scaled = (y_meas - x_mean)/x_std;
 
 %% === KALMAN FILTER ===
 x_pred = A*x_est;

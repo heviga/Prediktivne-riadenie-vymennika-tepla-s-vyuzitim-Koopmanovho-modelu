@@ -49,7 +49,7 @@ x0 = (50 - x_mean) / x_std;   % Start from 50°C
 %% --- MPC setup for control to 0°C ---
 Qy = 10;
 Qu = 1;
-N = 40;
+N = 20;
 
 r = (0 - x_mean) / x_std;   % Setpoint = 0°C (scaled)
 umin = (20 - u_mean) / u_std;

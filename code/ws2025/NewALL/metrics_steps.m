@@ -91,13 +91,13 @@ for k = 1:length(temps)
 
 
     %% ===== SAVE METRICS =====
-    metrics_mat = sprintf('steps/metrics_start%d.mat', T0);
-    metrics_csv = sprintf('steps/metrics_start%d.csv', T0);
-
-    save(metrics_mat, 'metrics');
-    writetable(metrics, metrics_csv);
-
-    fprintf('Metrics saved to %s and %s\n', metrics_mat, metrics_csv);
+%     metrics_mat = sprintf('steps/metrics_start%d.mat', T0);
+%     metrics_csv = sprintf('steps/metrics_start%d.csv', T0);
+% 
+%     save(metrics_mat, 'metrics');
+%     writetable(metrics, metrics_csv);
+% 
+%     fprintf('Metrics saved to %s and %s\n', metrics_mat, metrics_csv);
 
 end
 

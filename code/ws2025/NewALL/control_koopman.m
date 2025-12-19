@@ -3,6 +3,9 @@ function u_cmd = control_koopman(y_meas, opts)
 %   u_cmd = control_koopman(y_meas, r)
 %   u_cmd = control_koopman(y_meas, r, struct('reset',true))  -> reset state
 % r v nule 58.3377
+% P        % = P_{k|k}
+% P_pred   % = P_{k|k-1}
+
 persistent A B C D nx ny N Qy Qu Q_KF R_KF ...
     umin umax ymin ymax ...
     x_mean x_std u_mean u_std ...
@@ -73,7 +76,7 @@ if isempty(initialized) || ~initialized
 
     % --- Initialize state from measurement ---
     y_scaled = (y_meas - x_mean)/x_std;
-    x_est = pinv(C) * y_scaled;
+    x_est = pinv(C) * y_scaled; %\hat{x}_{k|k}
 
     initialized = true;
     disp('[control_koopman] Controller initialized.');
@@ -85,7 +88,7 @@ y_scaled = (y_meas - x_mean)/x_std;
 
 %% === KALMAN FILTER ===
 % Prediction
-x_pred = A*x_est;
+x_pred = A*x_est;% = \hat{x}_{k|k-1}
 P_pred = A*P*A' + Q_KF;
 
 % Update

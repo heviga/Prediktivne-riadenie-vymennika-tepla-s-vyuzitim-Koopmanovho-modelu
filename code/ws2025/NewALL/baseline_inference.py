@@ -157,18 +157,30 @@ def get_x(y):
     x = problem.nodes[0]({"Y0": torch.from_numpy(y.reshape(1,-1,1)).float()})
     x = x["x"][0].detach().numpy().reshape(-1,1)
 
+def reset_state():
+    """Reset the global state variable x to None to force re-initialization"""
+    global x
+    x = None
+
 def y_plus(u):
     global x
+    if x is None:
+        raise RuntimeError("Baseline model state not initialized. Call get_x(y0) first.")
     u = np.array(u).reshape(-1,1)
+    # Ensure u is scalar (single value)
+    if u.size > 1:
+        u = u[0, 0] if u.shape[0] == 1 else u[0]
+        u = np.array([[u]])  # Reshape to (1,1)
     x_plus = A@x + B@u
     y_plus = problem.nodes[4]({"x": torch.from_numpy(x_plus.reshape(1,-1)).float()})
     x = x_plus
     return y_plus["yhat"][0].detach().numpy().reshape(1,-1).T
 
 def init():
-    global A, B
+    global A, B, x
     load_problems()
     A = K.weight.detach().numpy()
     B = f_u.weight.detach().numpy()
+    x = None  # Initialize state as None to force explicit initialization
     
 

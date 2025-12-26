@@ -1,104 +1,122 @@
-%% Auto-plot + metrics for all Koopman/Strejc logs
+%% Auto-plot + metrics ONLY for start temperature >= 60 °C
+clc; clear;close all;
 
+%% ===== SCALING CONSTANTS =====
+x_mean = 59.0676;
+x_std  = 6.9122;
+
+u_mean = 65.8447;
+u_std  = 22.9062;
+
+%% ===== SETTINGS =====
 time_format = 'yyyy-MM-dd HH:mm:ss.SSS';
-required_vars = {'timestamp','T4','Pump2'};
 
 Q_cost = 10;
 R_cost = 1;
 
-temps = [45, 50, 55, 58, 60, 62, 66, 68];   % initial temperatures
+temps = [45, 50, 55, 58, 60, 62, 66, 68];
 x_mean_target = 59.0676 + abs(59.0676 - 63.8084);
 
+%% ===== GLOBAL ACCUMULATORS =====
+sum_obj_koop_scaled_all   = 0;
+sum_obj_strejc_scaled_all = 0;
+
+sum_iae_koop_all   = 0;
+sum_iae_strejc_all = 0;
+
+sum_rmse_koop_all   = 0;
+sum_rmse_strejc_all = 0;
+
+
+%% ===== MAIN LOOP =====
 for k = 1:length(temps)
 
-    T0 = temps(k);  % initial temperature to label files & figures
-
-    koop_file = sprintf('steps/2611runtime_log_koop%d.mat', k);
-    strejc_file = sprintf('steps/2611runtime_log_strejc%d.mat', k);
-
+    T0 = temps(k);
     fprintf('\n--- Processing start T = %d °C ---\n', T0);
 
-    %% ===== LOAD KOOPMAN =====
-    S_koop = load(koop_file);
-    log_data = S_koop.log_data;
+    koop_file   = sprintf('steps/2611runtime_log_koop%d.mat', k);
+    strejc_file = sprintf('steps/2611runtime_log_strejc%d.mat', k);
 
-    time_raw = log_data.timestamp;
-    if iscell(time_raw), time_raw = string(time_raw); end
-    t = datetime(time_raw, 'InputFormat', time_format);
+    %% ===== LOAD KOOPMAN =====
+    S = load(koop_file);
+    log_data = S.log_data;
+
+    t = datetime(string(log_data.timestamp), 'InputFormat', time_format);
     time_koop = minutes(t - t(1));
 
-    T4_koop = log_data.T4;
-    Pump_koop = log_data.Pump2;
+    T4_koop   = log_data.T4(:);
+    Pump_koop = log_data.Pump2(:);
 
     %% ===== LOAD STREJC =====
-    S_strejc = load(strejc_file);
-    log_data = S_strejc.log_data;
+    S = load(strejc_file);
+    log_data = S.log_data;
 
-    time_raw = log_data.timestamp;
-    if iscell(time_raw), time_raw = string(time_raw); end
-    t = datetime(time_raw, 'InputFormat', time_format);
+    t = datetime(string(log_data.timestamp), 'InputFormat', time_format);
     time_strejc = minutes(t - t(1));
 
-    T4_strejc = log_data.T4;
-    Pump_strejc = log_data.Pump2;
-
-
-    %% ===== FIGURE with 2 tiles =====
-    fig = figure('Name', sprintf('Start %d°C — Koopman vs Strejc', T0), 'Color', 'w');
-    tiledlayout(2,1,'TileSpacing','Compact','Padding','Compact');
-
-    % --- T4 ---
-    nexttile;
-    plot(time_koop, T4_koop, 'LineWidth', 1.3); hold on;
-    plot(time_strejc, T4_strejc, 'LineWidth', 1.3);
-    grid on; ylabel('T4 [°C]');
-    title(sprintf('Measured Temperature (Start %d°C)', T0));
-    legend({'Koopman','Strejc'}, 'Location','southeast');
-
-    % --- Pump2 ---
-    nexttile;
-    plot(time_koop, Pump_koop, 'LineWidth', 1.3); hold on;
-    plot(time_strejc, Pump_strejc, 'LineWidth', 1.3);
-    grid on; ylabel('Pump2 [%]'); xlabel('Elapsed time [min]');
-    title('Pump2 Actuation');
-    legend({'Koopman','Strejc'}, 'Location','southeast');
-
-    sgtitle(sprintf('Koopman vs Strejc Control Logs — Start %d°C', T0));
-
+    T4_strejc   = log_data.T4(:);
+    Pump_strejc = log_data.Pump2(:);
 
     %% ===== METRICS =====
     target = x_mean_target;
+    bias   = target - x_mean;
 
-    rmse_koop = sqrt(mean((T4_koop - target).^2));
+    % --- RMSE ---
+    rmse_koop   = sqrt(mean((T4_koop   - target).^2));
     rmse_strejc = sqrt(mean((T4_strejc - target).^2));
+    sum_rmse_koop_all   = sum_rmse_koop_all   + rmse_koop;
+    sum_rmse_strejc_all = sum_rmse_strejc_all + rmse_strejc;
 
-    obj_koop = sum(Q_cost*(T4_koop - target).^2 + R_cost*(Pump_koop).^2);
-    obj_strejc = sum(Q_cost*(T4_strejc - target).^2 + R_cost*(Pump_strejc).^2);
 
-    sum_pump_koop = sum(Pump_koop);
-    sum_pump_strejc = sum(Pump_strejc);
+    % --- IAE ---
+    iae_koop   = sum(abs(T4_koop   - target));
+    iae_strejc = sum(abs(T4_strejc - target));
 
+    % --- Objective (physical) ---
+    obj_koop = sum(Q_cost*(T4_koop - target).^2 ...
+                 + R_cost*(Pump_koop).^2);
+
+    obj_strejc = sum(Q_cost*(T4_strejc - target).^2 ...
+                   + R_cost*(Pump_strejc).^2);
+
+    % --- Scaled objective ---
+    obj_koop_scaled = sum( ...
+        Q_cost*((T4_koop   - bias - x_mean)/x_std).^2 + ...
+        R_cost*((Pump_koop - u_mean)/u_std).^2 );
+
+    obj_strejc_scaled = sum( ...
+        Q_cost*((T4_strejc - bias - x_mean)/x_std).^2 + ...
+        R_cost*((Pump_strejc - u_mean)/u_std).^2 );
+
+    % --- Accumulate global sums ---
+    sum_obj_koop_scaled_all   = sum_obj_koop_scaled_all   + obj_koop_scaled;
+    sum_obj_strejc_scaled_all = sum_obj_strejc_scaled_all + obj_strejc_scaled;
+
+    sum_iae_koop_all   = sum_iae_koop_all   + iae_koop;
+    sum_iae_strejc_all = sum_iae_strejc_all + iae_strejc;
+
+    %% ===== PER-EXPERIMENT TABLE =====
     metrics = table( ...
         {'Koopman'; 'Strejc'}, ...
         [rmse_koop; rmse_strejc], ...
+        [iae_koop; iae_strejc], ...
         [obj_koop; obj_strejc], ...
-        [sum_pump_koop; sum_pump_strejc], ...
-        'VariableNames', {'Controller','RMSE_T4','Objective','SumPump2'});
+        [obj_koop_scaled; obj_strejc_scaled], ...
+        'VariableNames', ...
+        {'Controller','RMSE_T4','IAE','Objective','Objective_Scaled'} );
 
-    disp('--- Performance metrics ---');
-    fprintf('starting temperature: %d\n', T0);
     disp(metrics);
-
-
-    %% ===== SAVE METRICS =====
-%     metrics_mat = sprintf('steps/metrics_start%d.mat', T0);
-%     metrics_csv = sprintf('steps/metrics_start%d.csv', T0);
-% 
-%     save(metrics_mat, 'metrics');
-%     writetable(metrics, metrics_csv);
-% 
-%     fprintf('Metrics saved to %s and %s\n', metrics_mat, metrics_csv);
 
 end
 
-disp('--- All figures + metrics generated ---');
+metrics_total = table( ...
+    {'Koopman'; 'Strejc'}, ...
+    [sum_rmse_koop_all; sum_rmse_strejc_all], ...
+    [sum_iae_koop_all;  sum_iae_strejc_all], ...
+    [sum_obj_koop_scaled_all; sum_obj_strejc_scaled_all], ...
+    'VariableNames', ...
+    {'Controller','Total_RMSE','Total_IAE','Total_Objective_Scaled'} );
+
+disp('===== FINAL SUM OVER ALL INITIAL CONDITIONS =====');
+disp(metrics_total);
+

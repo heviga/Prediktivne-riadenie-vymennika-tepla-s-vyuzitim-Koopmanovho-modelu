@@ -130,7 +130,7 @@ else
     legend([hAvg hY], {'Average Response', '$63.2\%$ of $\mathrm{K}$'}, 'Interpreter', 'latex', 'Location', 'best');
 end
 hold off;
-saveas(gcf, 'C:\Users\ivadu\Desktop\8.semestrik\vymennik\prez\average_step_response.png');
+%saveas(gcf, 'C:\Users\ivadu\Desktop\8.semestrik\vymennik\prez\average_step_response.png');
 
 %% saving data
 
@@ -138,12 +138,12 @@ saveas(gcf, 'C:\Users\ivadu\Desktop\8.semestrik\vymennik\prez\average_step_respo
 Ytrain=y(1:2000);
 Utrain=u(1:2000);
 
-save("train_data.mat", 'Ytrain', 'Utrain')
+%save("train_data.mat", 'Ytrain', 'Utrain')
  
 
 Ytest=y(2001:end);
 Utest=u(2001:end);
-save("test_data.mat", 'Ytest', 'Utest')
+%save("test_data.mat", 'Ytest', 'Utest')
 
 %% 
 %% Raw measurement overview
@@ -159,7 +159,7 @@ subplot(2,1,2);
 plot(t, y, 'LineWidth', 1.2);
 grid on; box on;
 xlabel('Time (s)');
-ylabel('Outlet temperature $T_4$ ($^\circ$C)','Interpreter','latex');
+ylabel('Outlet temperature $T_4$ ($^\circ$C)');
 title('Measured output');
 
 %% Step detection
@@ -181,23 +181,36 @@ t_end = t(end);   % common time limit
 % Raw measured signals used for identification
 fig1 = figure('Color','w','Name','Raw Identification Measurements');
 
-subplot(2,1,1);
-plot(t, u, 'LineWidth', 1.2);
-grid on; box on;
-xlim([0 t_end]);
-ylim([0 101])
-ylabel('Pump F speed (\%)');
-title('Input signal');
+% --- farby ---
+c_light = [0.6 0.8 1.0];   % bledomodrá
+c_dark  = [0 0.2 0.6];     % tmavomodrá
 
-subplot(2,1,2);
-plot(t, y, 'LineWidth', 1.2);
-xlim([0 t_end]);
+idx_train = 1:2000;
+idx_test  = 2001:length(t);
+
+subplot(2,1,1); hold on;
+plot(t(idx_train), u(idx_train+1), 'Color', c_light, 'LineWidth', 1.2);
+plot(t(idx_test),  u(idx_test),  'Color', c_dark,  'LineWidth', 1.2);
+grid on; box on;
+ylabel('Pump F speed (%)');
+title('Input signal');
+legend('Training data','Test data','Location','southwest');
+ylim([0 101])
+xlim([0 3000])
+hold off;
+
+
+subplot(2,1,2); hold on;
+plot(t(idx_train), y(idx_train), 'Color', c_light, 'LineWidth', 1.2);
+plot(t(idx_test),  y(idx_test),  'Color', c_dark,  'LineWidth', 1.2);
 grid on; box on;
 xlabel('Time (s)');
-ylabel('Outlet temperature $T_4$ ($^\circ$C)', 'Interpreter','latex');
+ylabel('Outlet temperature T_4 (°C)');
 title('Measured output');
-
-saveas(fig1, 'figs/fig_raw_measurements.png');
+legend('Training data','Test data','Location','best');
+hold off;
+xlim([0 3000])
+saveas(fig1, 'figs/fig_raw_measurementsSplit.png');
 
 
 colors = lines(min(num_steps,10));
@@ -248,7 +261,7 @@ for i = 1:num_steps
     plot(0:max_length-1, y_norm, 'Color', c, 'LineWidth', 1);
 end
 
-saveas(fig2, 'figs/fig_normalized_step_responses.png');
+%saveas(fig2, 'figs/fig_normalized_step_responses.png');
 %%Average normalized step response
 avg_step = mean(y_steps, 1, 'omitnan');
 
@@ -271,7 +284,7 @@ if ~isempty(tau_idx)
     xline(tau_idx, '--r', '$T$', 'Interpreter','latex');
 end
 legend('Average response','Location','best');
-saveas(fig3, 'figs/fig_average_step_response.png');
+%saveas(fig3, 'figs/fig_average_step_response.png');
 
 
 

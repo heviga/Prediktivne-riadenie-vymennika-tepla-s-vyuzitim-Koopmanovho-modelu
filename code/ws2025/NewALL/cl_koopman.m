@@ -7,67 +7,13 @@ addpath('../');
 
 % Initialize Python environment for baseline inference
 % terminate(pyenv); % Not needed for InProcess mode
-use_baseline = false; % Flag to indicate if baseline inference is available
-baseline_inference = [];
+pyenv('Version', 'C:\Users\ivadu\AppData\Local\Programs\Python\Python39\python.exe');
 
-python_exe = 'C:\Users\ivadu\AppData\Local\Programs\Python\Python39\python.exe';
-python_path = 'C:\Users\ivadu\Desktop\9.semestrik\vymennik\Prediktivne-riadenie-vymennika-tepla-s-vyuzitim-Koopmanovho-modelu\code\ws2025\NewALL';
+% Add Python path for baseline_inference
+py.sys.path().append('C:\Users\ivadu\Desktop\9.semestrik\vymennik\Prediktivne-riadenie-vymennika-tepla-s-vyuzitim-Koopmanovho-modelu\code\ws2025\NewALL');
 
-% Install missing dependencies first
-fprintf('Installing missing Python dependencies (zipp)...\n');
-[status, cmdout] = system(sprintf('"%s" -m pip install zipp 2>&1', python_exe));
-if status == 0
-    fprintf('Dependencies installed successfully.\n');
-else
-    fprintf('Warning: Dependency installation may have failed: %s\n', cmdout);
-end
-
-try
-    % Set up Python environment
-    pyenv('Version', python_exe);
-    
-    % Add Python path for baseline_inference
-    if count(py.sys.path, python_path) == 0
-        py.sys.path().append(python_path);
-    end
-    
-    % Import the module explicitly
-    baseline_inference = py.importlib.import_module('baseline_inference');
-    
-    % Initialize baseline inference
-    baseline_inference.init();
-    use_baseline = true;
-    fprintf('Baseline inference initialized successfully.\n');
-catch ME
-    % If import fails, try to get more details and retry
-    fprintf('First import attempt failed: %s\n', ME.message);
-    fprintf('Attempting to install all required dependencies...\n');
-    
-    try
-        % Try installing zipp again with verbose output
-        system(sprintf('"%s" -m pip install --upgrade zipp', python_exe));
-        
-        % Also try installing/upgrading setuptools which often includes zipp
-        system(sprintf('"%s" -m pip install --upgrade setuptools', python_exe));
-        
-        % Clear Python interface and retry
-        clear py;
-        pyenv('Version', python_exe);
-        
-        if count(py.sys.path, python_path) == 0
-            py.sys.path().append(python_path);
-        end
-        
-        baseline_inference = py.importlib.import_module('baseline_inference');
-        baseline_inference.init();
-        use_baseline = true;
-        fprintf('Baseline inference initialized successfully after dependency installation.\n');
-    catch ME2
-        warning('Could not initialize baseline inference: %s', ME2.message);
-        fprintf('Continuing without baseline inference (using Koopman model for true system).\n');
-        use_baseline = false;
-    end
-end
+% Initialize baseline inference
+py.baseline_inference.init();
 
 
 % Load Koopman model matrices
@@ -140,7 +86,7 @@ umax = (100 - u_mean) / u_std;
 ymin = (0 - x_mean) / x_std;
 ymax = (70 - x_mean) / x_std;
 
-r = (60 - x_mean) / x_std;  % Setpoint
+%r = (60 - x_mean) / x_std;  % Setpoint
 
 
 % YALMIP setup
@@ -184,56 +130,20 @@ y_meas(:,1) = y_true(:,1) + meas_noise_std*randn(ny,1);
 
 %% simulation of cl
 
-% Reset baseline model state before simulation
-if use_baseline
-    fprintf('Resetting baseline model state (Koopman)...\n');
-    try
-        baseline_inference.reset_state();
-        fprintf('Baseline state reset successful.\n');
-    catch ME_reset
-        fprintf('Warning: reset_state failed: %s\n', ME_reset.message);
-        % If reset_state doesn't exist, that's okay - get_x will initialize
-    end
-end
-
 for t = 1:sim_length
     u_cl(:,t) = controller{x_est(:,t)};%z odhadovaneho
     
     % === BASELINE INFERENCE INTEGRATION ===
-    % Use baseline model for true system dynamics if available
-    if use_baseline
-        try
-            if t == 1
-                % Initialize baseline model with current state (scaled)
-                fprintf('Initializing baseline (Koopman) with y0 = %.4f (scaled), %.4f °C (descaled)\n', ...
-                    y_true(:,t), y_true(:,t) * x_std + x_mean);
-                baseline_inference.get_x(y_true(:,t));
-            end
-            
-            % Get measurement from baseline model (true system)
-            % u_cl is already in scaled domain
-            if t <= 3
-                fprintf('t=%d: u_cl=%.4f (scaled), %.4f%% (descaled) -> ', ...
-                    t, u_cl(:,t), u_cl(:,t) * u_std + u_mean);
-            end
-            y_baseline = baseline_inference.y_plus(u_cl(:,t));
-            y_baseline_array = double(y_baseline);
-            y_true(:,t+1) = y_baseline_array(1); % Extract scalar value
-            if t <= 3
-                fprintf('y_baseline=%.4f (scaled), %.4f °C (descaled)\n', ...
-                    y_baseline_array(1), y_baseline_array(1) * x_std + x_mean);
-            end
-        catch ME
-            warning('Baseline inference error at step %d: %s. Using Koopman model.', t, ME.message);
-            % Fallback to Koopman model
-            x_true(:,t+1) = A * x_true(:,t) + B * Utest_scaled(t);
-            y_true(:,t+1) = C * x_true(:,t+1);
-        end
-    else
-        % Use Koopman model for true system dynamics
-        x_true(:,t+1) = A * x_true(:,t) + B * Utest_scaled(t);
-        y_true(:,t+1) = C * x_true(:,t+1);
+    % Use baseline model for true system dynamics
+    if t == 1
+        % Initialize baseline model with current state
+        py.baseline_inference.get_x(y_true(:,t));
     end
+    %ucl prepocitat na ustaleny stav
+    % Get measurement from baseline model (true system)
+    y_baseline = py.baseline_inference.y_plus(u_cl(:,t));
+    y_baseline_array = double(y_baseline);
+    y_true(:,t+1) = y_baseline_array(1); % Extract scalar value
     
     y_meas(:,t+1) = y_true(:,t+1) + meas_noise_std * randn(ny,1);
     
@@ -304,6 +214,6 @@ fprintf('RMSE (Open-loop)  = %.4f\n', rmse_open);% stupen celzia
 fprintf('RMSE (Closed-loop) = %.4f\n', rmse_cl);
 
 
-save('results_koopman_to_zero.mat', 'y_true_desc', 'y_est_desc', 'u_cl_desc','x_mean','u_mean','u_cl','y_true');   % From Koopman
-save('baseline_reference.mat', 'y_true_desc');  % Save baseline for comparison
+% save('results_koopman_to_zero.mat', 'y_true_desc', 'y_est_desc', 'u_cl_desc','x_mean','u_mean','u_cl',"y_true");   % From Koopman
+% save('baseline_reference.mat', 'y_true_desc');  % Save baseline for comparison
 

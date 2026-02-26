@@ -4,11 +4,6 @@
 
 clc; clear; close all;
 
-% ===== ADD IMPORTANT PATHS =====
-project_root = 'C:\Users\ivadu\Desktop\9.semestrik\vymennik\Prediktivne-riadenie-vymennika-tepla-s-vyuzitim-Koopmanovho-modelu\code';
-
-addpath(genpath(project_root));   % pridá celý code priečinok vrátane readNPY
-
 set(groot,'defaultTextInterpreter','latex');
 set(groot,'defaultLegendInterpreter','latex');
 set(groot,'defaultAxesTickLabelInterpreter','latex');
@@ -23,8 +18,8 @@ Qu = 1;
 bias = 0.3160;   % baseline correction (NECHÁVAME)
 
 %% ===== LOAD SCALING =====
-load('../data/train_data.mat');
-load('../data/test_data.mat');
+load('train_data.mat');
+load('test_data.mat');
 
 Yall = [Ytrain(:); Ytest(:)];
 Uall = [Utrain(:); Utest(:)];
@@ -36,8 +31,8 @@ u_std  = std(Uall);
 
 %% ===== PYTHON BASELINE SETUP =====
 pyenv('Version','C:\Users\ivadu\AppData\Local\Programs\Python\Python39\python.exe');
-py.sys.path().append( ...
-'C:\Users\ivadu\Desktop\9.semestrik\vymennik\Prediktivne-riadenie-vymennika-tepla-s-vyuzitim-Koopmanovho-modelu\code\LS2026\closed loop simulations');
+py.sys.path().append('C:\Users\ivadu\Desktop\9.semestrik\vymennik\Prediktivne-riadenie-vymennika-tepla-s-vyuzitim-Koopmanovho-modelu\code\LS2026');
+
 
 %% ===== STORAGE =====
 metrics_rows = table('Size',[0 7], ...
@@ -182,49 +177,3 @@ nexttile;
 plot(T0, metrics_rows.Obj_K,'m-o','LineWidth',1.6); hold on;
 plot(T0, metrics_rows.Obj_S,'b-s','LineWidth',1.6);
 grid on; title('Closed-loop Objective');
-
-
-
-%% ===== SAVE RESULTS =====
-
-fprintf('\nSaving results...\n');
-
-% ---- create timestamp folder ----
-timestamp = datestr(now,'yyyy_mm_dd_HH_MM_SS');
-save_folder = fullfile(project_root,'LS2026\closed loop simulations','closed_loop_results',timestamp);
-
-if ~exist(save_folder,'dir')
-    mkdir(save_folder);
-end
-
-%% ---- SAVE ALL FIGURES ----
-figHandles = findall(groot,'Type','figure');
-
-for k = 1:length(figHandles)
-    
-    fig = figHandles(k);
-    
-    fig_name = sprintf('Figure_%02d',k);
-    
-    savefig(fig, fullfile(save_folder,[fig_name '.fig']));
-    exportgraphics(fig, fullfile(save_folder,[fig_name '.png']),'Resolution',300);
-    
-end
-
-%% ---- SAVE METRICS + DATA ----
-
-results.metrics_rows = metrics_rows;
-results.temps        = temps;
-results.sim_length   = sim_length;
-results.Qy           = Qy;
-results.Qu           = Qu;
-results.bias         = bias;
-results.x_mean       = x_mean;
-results.x_std        = x_std;
-results.u_mean       = u_mean;
-results.u_std        = u_std;
-
-save(fullfile(save_folder,'closed_loop_results.mat'),'results');
-
-fprintf('Results saved to:\n%s\n', save_folder);
-fprintf('Done.\n');

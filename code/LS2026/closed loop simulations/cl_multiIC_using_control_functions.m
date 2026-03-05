@@ -4,6 +4,7 @@
 
 clc; clear; close all;
 
+
 % ===== ADD IMPORTANT PATHS =====
 project_root = 'C:\Users\ivadu\Desktop\9.semestrik\vymennik\Prediktivne-riadenie-vymennika-tepla-s-vyuzitim-Koopmanovho-modelu\code';
 
@@ -171,18 +172,23 @@ tiledlayout(1,3,'TileSpacing','Compact','Padding','Compact');
 nexttile;
 plot(T0, metrics_rows.RMSE_K,'m-o','LineWidth',1.6); hold on;
 plot(T0, metrics_rows.RMSE_S,'b-s','LineWidth',1.6);
-grid on; title('RMSE');
+grid on;
+title('RMSE');
+xlabel('Initial temperature $T_0$ ($^\circ$C)');
 
 nexttile;
 plot(T0, metrics_rows.IAE_K,'m-o','LineWidth',1.6); hold on;
 plot(T0, metrics_rows.IAE_S,'b-s','LineWidth',1.6);
-grid on; title('IAE');
+grid on;
+title('IAE');
+xlabel('Initial temperature $T_0$ ($^\circ$C)');
 
 nexttile;
 plot(T0, metrics_rows.Obj_K,'m-o','LineWidth',1.6); hold on;
 plot(T0, metrics_rows.Obj_S,'b-s','LineWidth',1.6);
-grid on; title('Closed-loop Objective');
-
+grid on;
+title('Closed-loop Objective');
+xlabel('Initial temperature $T_0$ ($^\circ$C)');
 
 
 %% ===== SAVE RESULTS =====

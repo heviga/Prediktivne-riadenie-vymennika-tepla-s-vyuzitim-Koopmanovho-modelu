@@ -7,7 +7,7 @@ sim_ss = 250;            % 600 krokov
 y_ss = zeros(sim_ss,1);
 
 % inicializuj baseline v nule (scaled)
-py.baseline_inference.get_x(0);
+py.baseline_inference.get_x(0.0);
 
 y_curr = 0;
 

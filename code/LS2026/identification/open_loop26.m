@@ -1,5 +1,9 @@
 clc,close all, clear all
 data = load('identifikacia2.mat'); %3000
+project_root = 'C:\Users\ivadu\Desktop\9.semestrik\vymennik\Prediktivne-riadenie-vymennika-tepla-s-vyuzitim-Koopmanovho-modelu\code';
+
+addpath(genpath(project_root));   % pridá celý code priečinok vrátane readNPY
+
 %prvy zly skok prec 
 %finale 3000 samples
 y = data.Temperatures{4}.Values.Data;% temperatures t4

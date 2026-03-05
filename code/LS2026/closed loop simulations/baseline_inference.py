@@ -33,8 +33,8 @@ def load_problems():
 
     global problem, f_u, K
 
-    nx_koopman = 240
-    layers = [80, 160, 240]
+    nx_koopman = 10
+    layers = [8, 16, 24, 10]
     ny = 1
     nsteps = 80
     nu = 1
@@ -60,7 +60,7 @@ def load_problems():
         bias=True,
         linear_map=nn.Linear,
         nonlin=nn.ELU,
-        hsizes=layers[::-1]
+        hsizes=[24, 16, 8]   # ✅ presne ako checkpoint
     )
 
     decode_y = Node(f_y_inv, ['x'], ['yhat'], name='decoder_y')
@@ -120,7 +120,6 @@ def y_plus(u):
 
 
 def init():
-
     global A, B
 
     load_problems()
@@ -130,8 +129,12 @@ def init():
     model_path = os.path.join(
         base_dir,
         "data",
-        "model_20260225_212916.pth"
+        "model_20260305_115547"
     )
+
+    # ✅ doplň príponu, ak chýba
+    if not model_path.endswith(".pth"):
+        model_path = model_path + ".pth"
 
     problem.load_state_dict(
         torch.load(model_path, map_location=torch.device("cpu")),

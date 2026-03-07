@@ -1,14 +1,25 @@
+
+
 %% cl_multiIC_using_control_functions.m
 % Closed-loop simulation using REAL control functions
 % Plant = baseline_inference (scaled domain internally)
 
+%% cl_multiIC_using_control_functions.m
 clc; clear; close all;
 
+% ===== PYTHON FIRST =====
+pe = pyenv;
+disp(pe)
+
+if pe.Status == "NotLoaded"
+    pyenv('Version','C:\Users\ivadu\AppData\Local\Programs\Python\Python39\python.exe');
+else
+    disp("Python already loaded. If wrong environment is loaded, restart MATLAB first.");
+end
 
 % ===== ADD IMPORTANT PATHS =====
 project_root = 'C:\Users\ivadu\Desktop\9.semestrik\vymennik\Prediktivne-riadenie-vymennika-tepla-s-vyuzitim-Koopmanovho-modelu\code';
-
-addpath(genpath(project_root));   % pridá celý code priečinok vrátane readNPY
+addpath(genpath(project_root));
 
 set(groot,'defaultTextInterpreter','latex');
 set(groot,'defaultLegendInterpreter','latex');
@@ -21,24 +32,58 @@ sim_length = 300;
 Qy = 10;
 Qu = 1;
 
-bias = 0.3160;   % baseline correction (NECHÁVAME)
+bias = 0;%0.3160; %0.235071; %;   % baseline correction (NECHÁVAME)
 
 %% ===== LOAD SCALING =====
 load('../data/train_data.mat');
 load('../data/test_data.mat');
 
-Yall = [Ytrain(:); Ytest(:)];
-Uall = [Utrain(:); Utest(:)];
+% Yall = [Ytrain(:); Ytest(:)];
+% Uall = [Utrain(:); Utest(:)];
+% 
+% x_mean = mean(Yall);
+% x_std  = std(Yall);
+% u_mean = mean(Uall);
+% u_std  = std(Uall);
 
-x_mean = mean(Yall);
-x_std  = std(Yall);
-u_mean = mean(Uall);
-u_std  = std(Uall);
+joblib = py.importlib.import_module('joblib');
+os = py.importlib.import_module('os');
 
+SEM_DIR = 'C:\Users\ivadu\Desktop\9.semestrik\vymennik\Prediktivne-riadenie-vymennika-tepla-s-vyuzitim-Koopmanovho-modelu\code\LS2026';
+
+% scY = joblib.load(os.path.join(SEM_DIR,'data','scaler.pkl'));
+% scU = joblib.load(os.path.join(SEM_DIR,'data','scalerU.pkl'));
+% 
+% % --- pull attributes safely ---
+% % mean_ a scale_ sú numpy ndarray
+% meanY = py.getattr(scY, 'mean_');
+% stdY  = py.getattr(scY, 'scale_');
+% meanU = py.getattr(scU, 'mean_');
+% stdU  = py.getattr(scU, 'scale_');
+% 
+% % ---- robust: numpy ndarray -> MATLAB double vector ----
+% x_mean_vec = double(meanY);   % 1x1 alebo 1xn
+% x_std_vec  = double(stdY);
+% u_mean_vec = double(meanU);
+% u_std_vec  = double(stdU);
+% 
+% % ak máš ny=1 a nu=1, zober prvý prvok
+% x_mean = x_mean_vec(1);
+% x_std  = x_std_vec(1);
+% u_mean = u_mean_vec(1);
+% u_std  = u_std_vec(1);
+
+%% ===== LOAD SCALING =====
+S = load('../data/scalers_for_matlab.mat');
+x_mean = S.x_mean(1);
+x_std  = S.x_std(1);
+u_mean = S.u_mean(1);
+u_std  = S.u_std(1);
 %% ===== PYTHON BASELINE SETUP =====
-pyenv('Version','C:\Users\ivadu\AppData\Local\Programs\Python\Python39\python.exe');
-py.sys.path().append( ...
-'C:\Users\ivadu\Desktop\9.semestrik\vymennik\Prediktivne-riadenie-vymennika-tepla-s-vyuzitim-Koopmanovho-modelu\code\LS2026\closed loop simulations');
+%pyenv('Version', 'C:\Users\ivadu\Desktop\9.semestrik\vymennik\Prediktivne-riadenie-vymennika-tepla-s-vyuzitim-Koopmanovho-modelu\koopman_py311\Scripts\python.exe');
+% pyenv('Version','C:\Users\ivadu\AppData\Local\Programs\Python\Python39\python.exe');
+% py.sys.path().append( ...
+% 'C:\Users\ivadu\Desktop\9.semestrik\vymennik\Prediktivne-riadenie-vymennika-tepla-s-vyuzitim-Koopmanovho-modelu\code\LS2026\closed loop simulations');
 
 %% ===== STORAGE =====
 metrics_rows = table('Size',[0 7], ...
@@ -69,37 +114,82 @@ for i = 1:length(temps)
     y_store_S(1) = yS;
 
     %% ===== KOOPMAN =====
-    py.baseline_inference.init();
-    py.baseline_inference.get_x((yK - x_mean)/x_std);
+    %py.baseline_inference.init();
+   % py.baseline_inference.get_x((yK - x_mean)/x_std);
+    
+%     y0_scaled = (yK - x_mean)/x_std;
+%     py.baseline_inference.reset(y0_scaled);
+% 
+% for t = 1:sim_length
+%     u = control_koopman(yK + bias);
+%     u_store_K(t) = u;
+% 
+%     u_scaled = (u - u_mean)/u_std;
+% 
+%     y_next_scaled = py.baseline_inference.step(u_scaled);   % bez y_meas
+%     yK = double(y_next_scaled)*x_std + x_mean;
+%     y_store_K(t+1) = yK;
+% end
 
-    for t = 1:sim_length
+%% ===== KOOPMAN =====
+py.baseline_inference.init("model_baseline1");
 
-        u = control_koopman(yK + bias);
-        u_store_K(t) = u;
+yK = T0;
+py.baseline_inference.reset((yK - x_mean)/x_std);
 
-        u_scaled = (u - u_mean)/u_std;
-        y_next_scaled = py.baseline_inference.y_plus(u_scaled);
+for t = 1:sim_length
+    u = control_koopman(yK + bias);
+    u_store_K(t) = u;
 
-        yK = double(y_next_scaled.item())*x_std + x_mean;
-        y_store_K(t+1) = yK;
-    end
+    u_scaled = (u - u_mean)/u_std;
+
+    y_next_scaled = py.baseline_inference.step(u_scaled);
+    yK = double(y_next_scaled)*x_std + x_mean;
+    y_store_K(t+1) = yK;
+end
+    %% ===== STREJC =====
+    %py.baseline_inference.init();
+    %py.baseline_inference.get_x((yS - x_mean)/x_std);
+
+%     y0_scaled = (yS - x_mean)/x_std;
+%     py.baseline_inference.reset(y0_scaled);
+%    
+%     for t = 1:sim_length
+% 
+%         u = control_strejc(yS + bias);
+%         u_store_S(t) = u;
+% 
+%         u_scaled = (u - u_mean)/u_std;
+%         %y_next_scaled = py.baseline_inference.y_plus(u_scaled);
+% 
+%         y_scaled_now  = (yS - x_mean)/x_std;
+%         y_next_scaled = py.baseline_inference.step(u_scaled); 
+% 
+%        % y_next_scaled = py.baseline_inference.step(u_scaled, y_scaled_now);
+% %         y_scaled_now = (yK - x_mean)/x_std;   % (pri Strejc slučke daj yS)
+% %         y_next_scaled = py.baseline_inference.step(u_scaled, y_scaled_now);
+% 
+%         yS = double(y_next_scaled)*x_std + x_mean;
+%         y_store_S(t+1) = yS;
+%        
+%     end
 
     %% ===== STREJC =====
-    py.baseline_inference.init();
-    py.baseline_inference.get_x((yS - x_mean)/x_std);
+py.baseline_inference.init("model_baseline1");
 
-    for t = 1:sim_length
+yS = T0;
+py.baseline_inference.reset((yS - x_mean)/x_std);
 
-        u = control_strejc(yS + bias);
-        u_store_S(t) = u;
+for t = 1:sim_length
+    u = control_strejc(yS + bias);
+    u_store_S(t) = u;
 
-        u_scaled = (u - u_mean)/u_std;
-        y_next_scaled = py.baseline_inference.y_plus(u_scaled);
+    u_scaled = (u - u_mean)/u_std;
 
-        yS = double(y_next_scaled.item())*x_std + x_mean;
-        y_store_S(t+1) = yS;
-    end
-
+    y_next_scaled = py.baseline_inference.step(u_scaled);
+    yS = double(y_next_scaled)*x_std + x_mean;
+    y_store_S(t+1) = yS;
+end
     %% ===== METRICS =====
     y_ref = x_mean;
 
@@ -174,6 +264,7 @@ plot(T0, metrics_rows.RMSE_K,'m-o','LineWidth',1.6); hold on;
 plot(T0, metrics_rows.RMSE_S,'b-s','LineWidth',1.6);
 grid on;
 title('RMSE');
+legend('Koopman','Strejc')
 xlabel('Initial temperature $T_0$ ($^\circ$C)');
 
 nexttile;
@@ -181,6 +272,7 @@ plot(T0, metrics_rows.IAE_K,'m-o','LineWidth',1.6); hold on;
 plot(T0, metrics_rows.IAE_S,'b-s','LineWidth',1.6);
 grid on;
 title('IAE');
+legend('Koopman','Strejc')
 xlabel('Initial temperature $T_0$ ($^\circ$C)');
 
 nexttile;
@@ -188,6 +280,7 @@ plot(T0, metrics_rows.Obj_K,'m-o','LineWidth',1.6); hold on;
 plot(T0, metrics_rows.Obj_S,'b-s','LineWidth',1.6);
 grid on;
 title('Closed-loop Objective');
+legend('Koopman','Strejc')
 xlabel('Initial temperature $T_0$ ($^\circ$C)');
 
 
@@ -234,3 +327,26 @@ save(fullfile(save_folder,'closed_loop_results.mat'),'results');
 
 fprintf('Results saved to:\n%s\n', save_folder);
 fprintf('Done.\n');
+
+%% test
+% py.baseline_inference.init("model_20260306_164952");
+% 
+% y0 = 58;
+% u0 = 60;
+% 
+% y0s = (y0 - x_mean)/x_std;
+% u0s = (u0 - u_mean)/u_std;
+% 
+% py.baseline_inference.reset(y0s);
+% 
+% Y = zeros(250,1);
+% for k = 1:250
+%     y1s = py.baseline_inference.step(u0s);
+%     Y(k) = double(y1s)*x_std + x_mean;
+% end
+% 
+% figure;
+% plot(Y,'LineWidth',2); grid on;
+% title('Open-loop DeepKoopman plant, constant u');
+% ylabel('Outlet temperature (°C)');
+% xlabel('Step');

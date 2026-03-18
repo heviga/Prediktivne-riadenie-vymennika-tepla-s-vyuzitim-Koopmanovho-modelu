@@ -1,17 +1,30 @@
-clc; clear; close all;
+clc; clear all; close all;
 set(groot, 'defaultTextInterpreter', 'latex');
 set(groot, 'defaultLegendInterpreter', 'latex');
 set(groot, 'defaultAxesTickLabelInterpreter', 'latex');
-
-project_root = 'C:\Users\ivadu\Desktop\9.semestrik\vymennik\Prediktivne-riadenie-vymennika-tepla-s-vyuzitim-Koopmanovho-modelu\code';
-addpath(genpath(project_root));
-addpath('../');
+% 
+% project_root = 'C:\Users\ivadu\Desktop\9.semestrik\vymennik\Prediktivne-riadenie-vymennika-tepla-s-vyuzitim-Koopmanovho-modelu\code';
+% addpath(genpath(project_root));
+% addpath('../');
 
 %% ===== PYTHON BASELINE =====
-pyenv('Version', 'C:\Users\ivadu\AppData\Local\Programs\Python\Python39\python.exe');
-py.sys.path().append( ...
-    'C:\Users\ivadu\Desktop\9.semestrik\vymennik\Prediktivne-riadenie-vymennika-tepla-s-vyuzitim-Koopmanovho-modelu\code\LS2026\closed loop simulations');
-py.baseline_inference.init();
+pyenv('Version', '/Users/patrik/miniconda3/envs/kmpc/bin/python');
+
+p = '/Users/patrik/Documents/Skola/Pedagogika/Prediktivne-riadenie-vymennika-tepla-s-vyuzitim-Koopmanovho-modelu/code/LS2026/closed loop simulations';
+paths = cell(py.sys.path);
+if ~any(strcmp(paths, p))
+    insert(py.sys.path, int32(0), p);
+end
+
+py.baseline_inference.init();   % or mod = py.importlib.import_module('baseline_inference'); mod.init();
+
+
+%%
+py.baseline_inference.get_x([0])
+for i =1:1000
+    steady_state = py.baseline_inference.y_plus([0]);
+end
+steady_state
 
 %% ===== LOAD MODELS =====
 % Koopman model
@@ -139,7 +152,7 @@ for i = 1:length(y0_vals_scaled)
     x_est_k(:,1) = x0_k_init;
     yk(:,1) = C_k * x0_k_init;
     y_true_k(:,1) = yk(:,1);
-    y_meas_k(:,1) = y_true_k(:,1) + meas_noise_std * randn(1,1);
+    y_meas_k(:,1) = y_true_k(:,1);% + meas_noise_std * randn(1,1);
 
     for t = 1:sim_length
         try
@@ -159,7 +172,7 @@ for i = 1:length(y0_vals_scaled)
 
         try
             y_baseline = py.baseline_inference.y_plus(uk(:,t));
-            y_true_k(:,t+1) = double(y_baseline.item());
+            y_true_k(:,t+1) = double(y_baseline.item())-steady_state;
 
             if isnan(y_true_k(:,t+1))
                 fprintf('Warning: NaN baseline output at t=%d, IC=%d\n', t, i);
@@ -170,7 +183,7 @@ for i = 1:length(y0_vals_scaled)
             y_true_k(:,t+1) = y_true_k(:,t);
         end
 
-        y_meas_k(:,t+1) = y_true_k(:,t+1) + meas_noise_std * randn(1,1);
+        y_meas_k(:,t+1) = y_true_k(:,t+1); %+ meas_noise_std * randn(1,1);
 
         x_pred = A_k * x_est_k(:,t) + B_k * uk(:,t);
         P_pred = A_k * P_k * A_k' + Q_KF;
@@ -213,7 +226,7 @@ for i = 1:length(y0_vals_scaled)
     x_est_s(:,1) = y0_scaled;
     ys(:,1) = C_s * xs(:,1);
     y_true_s(:,1) = ys(:,1);
-    y_meas_s(:,1) = y_true_s(:,1) + meas_noise_std * randn(1,1);
+    y_meas_s(:,1) = y_true_s(:,1);% + meas_noise_std * randn(1,1);
 
     for t = 1:sim_length
         try
@@ -233,7 +246,7 @@ for i = 1:length(y0_vals_scaled)
 
         try
             y_baseline = py.baseline_inference.y_plus(us(:,t));
-            y_true_s(:,t+1) = double(y_baseline.item());
+            y_true_s(:,t+1) = double(y_baseline.item())-steady_state;
 
             if isnan(y_true_s(:,t+1))
                 fprintf('Warning: NaN baseline output at t=%d, IC=%d\n', t, i);
@@ -244,7 +257,7 @@ for i = 1:length(y0_vals_scaled)
             y_true_s(:,t+1) = y_true_s(:,t);
         end
 
-        y_meas_s(:,t+1) = y_true_s(:,t+1) + meas_noise_std * randn(1,1);
+        y_meas_s(:,t+1) = y_true_s(:,t+1); %+ meas_noise_std * randn(1,1);
 
         x_pred = A_s * x_est_s(:,t) + B_s * us(:,t);
         P_pred = A_s * P_s * A_s' + Q_kalman;

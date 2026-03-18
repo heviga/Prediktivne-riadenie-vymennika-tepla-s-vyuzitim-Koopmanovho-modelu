@@ -384,8 +384,22 @@
 #         yhat = f_y_inv(torch.from_numpy(x.reshape(1, -1)).float()).cpu().numpy()
 
 #     return float(yhat[0, 0])
-
 import os
+import sys
+import types
+
+# Prevent wandb from actually loading (it crashes in MATLAB's Python host)
+_fake_wandb = types.ModuleType('wandb')
+_fake_wandb.sdk = types.ModuleType('wandb.sdk')
+_fake_wandb.init = lambda *a, **kw: None
+_fake_wandb.log = lambda *a, **kw: None
+_fake_wandb.finish = lambda *a, **kw: None
+sys.modules.setdefault('wandb', _fake_wandb)
+sys.modules.setdefault('wandb.sdk', _fake_wandb.sdk)
+
+os.environ["WANDB_DISABLED"] = "true"
+os.environ["WANDB_MODE"] = "disabled"
+
 import joblib
 import numpy as np
 import torch
@@ -423,8 +437,8 @@ class Koopman_control(nn.Module):
         return x
 
 def load_problems():
-    nx_koopman = 80
-    layers = [60, 60, 60]
+    nx_koopman = 24
+    layers = [8,16,24]
     ny = 1
     nsteps = 80   
     nu = 1 
@@ -455,7 +469,7 @@ def load_problems():
         bias=True,
         linear_map=torch.nn.Linear,
         nonlin=torch.nn.ELU,
-        hsizes=[60, 60, 60]
+        hsizes=layers[::-1]
     )
     # predicted trajectory decoder
     decode_y = Node(f_y_inv, ['x'], ['yhat'], name='decoder_y')
@@ -538,8 +552,8 @@ def load_problems():
     # problem.load_state_dict(torch.load(model_path),strict=False)
 
     base_dir = os.path.dirname(os.path.dirname(__file__))
-    model_path = os.path.join(base_dir, 'data', 'model_20260306_202933.pth')
-    problem.load_state_dict(torch.load(model_path),strict=False)
+    model_path = os.path.join(base_dir, 'data', 'baseline.pth')
+    problem.load_state_dict(torch.load("../data/baseline.pth"),strict=False)
 
 
 def get_y(x):

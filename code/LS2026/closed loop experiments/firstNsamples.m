@@ -1,6 +1,8 @@
 %% Auto-plot + metrics for ALL start temperatures
 % Fixed transient evaluation over first 100 samples only
 clc; clear; close all;
+% peak počas hodnoteného transientu bola najväčšia absolútna odchýlka výstupu od targetu 
+%tvu celková zmena vstupu počas hodnoteného úseku bola x percentuálnych bodov pumpy
 
 project_root = 'C:\Users\ivadu\Desktop\9.semestrik\vymennik\Prediktivne-riadenie-vymennika-tepla-s-vyuzitim-Koopmanovho-modelu\code\LS2026';
 addpath(genpath(project_root));

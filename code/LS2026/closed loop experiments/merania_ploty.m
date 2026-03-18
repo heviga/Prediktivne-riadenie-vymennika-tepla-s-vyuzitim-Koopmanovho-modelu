@@ -1,6 +1,9 @@
 %% Auto-plot + metrics for ALL start temperatures (each T0 -> 1 figure like simulation)
 clc; clear; close all;
 
+project_root = 'C:\Users\ivadu\Desktop\9.semestrik\vymennik\Prediktivne-riadenie-vymennika-tepla-s-vyuzitim-Koopmanovho-modelu\code\LS2026';
+addpath(genpath(project_root));
+
 set(groot,'defaultTextInterpreter','latex');
 set(groot,'defaultLegendInterpreter','latex');
 set(groot,'defaultAxesTickLabelInterpreter','latex');

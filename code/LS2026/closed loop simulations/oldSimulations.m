@@ -3,14 +3,18 @@ set(groot, 'defaultTextInterpreter', 'latex');
 set(groot, 'defaultLegendInterpreter', 'latex');
 set(groot, 'defaultAxesTickLabelInterpreter', 'latex');
 % 
-% project_root = 'C:\Users\ivadu\Desktop\9.semestrik\vymennik\Prediktivne-riadenie-vymennika-tepla-s-vyuzitim-Koopmanovho-modelu\code';
-% addpath(genpath(project_root));
-% addpath('../');
+project_root = 'C:\Users\ivadu\Desktop\9.semestrik\vymennik\Prediktivne-riadenie-vymennika-tepla-s-vyuzitim-Koopmanovho-modelu\code';
+addpath(genpath(project_root));
+addpath('../');
 
 %% ===== PYTHON BASELINE =====
-pyenv('Version', '/Users/patrik/miniconda3/envs/kmpc/bin/python');
+% pyenv('Version', '/Users/patrik/miniconda3/envs/kmpc/bin/python');
 
-p = '/Users/patrik/Documents/Skola/Pedagogika/Prediktivne-riadenie-vymennika-tepla-s-vyuzitim-Koopmanovho-modelu/code/LS2026/closed loop simulations';
+pyenv('Version', 'C:\Users\ivadu\AppData\Local\Programs\Python\Python39\python.exe');
+p = 'C:\Users\ivadu\Desktop\9.semestrik\vymennik\Prediktivne-riadenie-vymennika-tepla-s-vyuzitim-Koopmanovho-modelu\code\LS2026\closed loop simulations';
+
+
+% p = '/Users/patrik/Documents/Skola/Pedagogika/Prediktivne-riadenie-vymennika-tepla-s-vyuzitim-Koopmanovho-modelu/code/LS2026/closed loop simulations';
 paths = cell(py.sys.path);
 if ~any(strcmp(paths, p))
     insert(py.sys.path, int32(0), p);
@@ -358,22 +362,27 @@ for i = 1:size(results_strejc,1)
 end
 
 %% ===== SUMMARY METRICS PLOT =====
-metric_names = {'RMSE', 'Objective function'};
-metric_idx = [5, 6];
+metric_names = {'IAE', 'RMSE', 'Objective function'};
+metric_idx = [3, 5, 6];
 
-figure('Name','Summary metrics','Position',[100 100 900 400],'Color','w');
-for i = 1:2
-    subplot(1,2,i)
+figure('Name','Summary metrics','Position',[100 100 1200 400],'Color','w');
+
+for i = 1:3
+    subplot(1,3,i)
     plot(y0_vals, results_koopman(:,metric_idx(i)), 'm-o','LineWidth',2); hold on;
     plot(y0_vals, results_strejc(:,metric_idx(i)), 'b-s','LineWidth',2);
     xlabel('Initial condition $y_0$ ($^\circ$C)');
+
     if i == 1
+        ylabel('IAE');
+    elseif i == 2
         ylabel('RMSE ($^\circ$C)');
     else
         ylabel('Objective function');
     end
+
     title(metric_names{i});
-    legend('Koopman','Strejc','Location','best');
+    legend('Koopman','Linear model','Location','best');
     grid on; grid minor;
 end
 
@@ -396,6 +405,61 @@ for i = 1:length(metrics_labels)
         strejc_mean(i), strejc_median(i), strejc_std(i));
 end
 
+%% ===== SAVE ALL RESULTS INTO TIMESTAMP FOLDER =====
+fprintf('\nSaving results...\n');
+
+timestamp = datestr(now,'yyyy_mm_dd_HH_MM_SS');
+save_folder = fullfile(project_root, 'LS2026', 'closed loop simulations', 'closed_loop_results', timestamp);
+
+if ~exist(save_folder, 'dir')
+    mkdir(save_folder);
+end
+
+%% ---- save all open figures ----
+figHandles = findall(groot, 'Type', 'figure');
+
+for k = 1:length(figHandles)
+    fig = figHandles(k);
+
+    fig_name = get(fig, 'Name');
+    if isempty(fig_name)
+        fig_name = sprintf('Figure_%02d', k);
+    else
+        fig_name = regexprep(fig_name, '[^\w\d_-]', '_');
+    end
+
+    savefig(fig, fullfile(save_folder, [fig_name '.fig']));
+    exportgraphics(fig, fullfile(save_folder, [fig_name '.png']), 'Resolution', 300);
+end
+
+%% ---- save numeric results ----
+results.results_koopman = results_koopman;
+results.results_strejc  = results_strejc;
+results.y0_vals         = y0_vals;
+results.koopman_traj    = koopman_traj;
+results.strejc_traj     = strejc_traj;
+
+results.metrics_labels  = metrics_labels;
+results.koopman_mean    = koopman_mean;
+results.strejc_mean     = strejc_mean;
+results.koopman_median  = koopman_median;
+results.strejc_median   = strejc_median;
+results.koopman_std     = koopman_std;
+results.strejc_std      = strejc_std;
+
+results.Qy = Qy;
+results.Qu = Qu;
+results.N = N;
+results.sim_length = sim_length;
+results.x_mean = x_mean;
+results.x_std  = x_std;
+results.u_mean = u_mean;
+results.u_std  = u_std;
+
+save(fullfile(save_folder, 'closed_loop_results.mat'), 'results');
+
+fprintf('Results saved to:\n%s\n', save_folder);
+fprintf('Done.\n');
 %% ===== OPTIONAL SAVE =====
 % save('results_fixedIC_ws2025.mat', ...
 %     'results_koopman', 'results_strejc', 'y0_vals', ...

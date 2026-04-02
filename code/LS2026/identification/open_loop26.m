@@ -205,17 +205,73 @@ fprintf('\n===== Open-loop RMSE =====\n');
 fprintf('Strejc RMSE  = %.4f °C\n', rmse_strejc);
 fprintf('Koopman RMSE = %.4f °C\n', rmse_koop);
 
-%% pllot compare
-figure('Color','w');
+%% ===== OPEN-LOOP COMPARISON PLOT =====
+fig_compare = figure('Color','w', ...
+    'Name','open_loop_comparison', ...
+    'Position',[100 100 950 420]);
 
 plot(time(1:end-1), y_true, 'k', 'LineWidth', 1.8); hold on;
-plot(time(1:end-1), y_strejc_pred, 'b', 'LineWidth', 1.6);
-plot(time(1:end-1), y_koop_pred, 'r', 'LineWidth', 1.6);
+plot(time(1:end-1), y_strejc_pred, 'b--', 'LineWidth', 1.8);
+plot(time(1:end-1), y_koop_pred, 'r-', 'LineWidth', 1.8);
 
-grid on;
+grid on; grid minor;
+box on;
 xlabel('Time step');
-ylabel('Outlet temperature T_4 (°C)');
-title('Open-loop Model Comparison on Test Data');
-xlim([0 1001])
+ylabel('Outlet temperature $T_4$ ($^\circ$C)');
+title('Open-loop model comparison on test data');
+xlim([1 sim_steps]);
 
-legend('True','Strejc','Koopman','Location','best');
+legend({'Measured output', ...
+        'Linear model', ...
+        'Koopman model'}, ...
+        'Location','best');
+
+%% ===== SAVE RESULTS =====
+fprintf('\nSaving open-loop results...\n');
+
+timestamp = datestr(now,'yyyy_mm_dd_HH_MM_SS');
+save_folder = fullfile(project_root, 'LS2026\identification', 'identification_results', 'open_loop_results', timestamp);
+
+if ~exist(save_folder, 'dir')
+    mkdir(save_folder);
+end
+
+% save comparison figure
+savefig(fig_compare, fullfile(save_folder, 'open_loop_comparison.fig'));
+exportgraphics(fig_compare, fullfile(save_folder, 'open_loop_comparison.png'), 'Resolution', 300);
+
+% optionally save all open figures too
+figHandles = findall(groot,'Type','figure');
+for k = 1:length(figHandles)
+    fig = figHandles(k);
+    fig_name = get(fig, 'Name');
+
+    if isempty(fig_name)
+        fig_name = sprintf('Figure_%02d', k);
+    else
+        fig_name = regexprep(fig_name, '[^\w\d_-]', '_');
+    end
+
+    savefig(fig, fullfile(save_folder, [fig_name '.fig']));
+    exportgraphics(fig, fullfile(save_folder, [fig_name '.png']), 'Resolution', 300);
+end
+
+% save numeric results
+results_open_loop.y_true = y_true;
+results_open_loop.y_strejc_pred = y_strejc_pred;
+results_open_loop.y_koop_pred = y_koop_pred;
+results_open_loop.u_test = utest;
+results_open_loop.time = time(1:end-1);
+
+results_open_loop.rmse_strejc = rmse_strejc;
+results_open_loop.rmse_koop = rmse_koop;
+
+results_open_loop.y_mean = y_mean;
+results_open_loop.y_std  = y_std;
+results_open_loop.u_mean = u_mean;
+results_open_loop.u_std  = u_std;
+
+save(fullfile(save_folder, 'open_loop_results.mat'), 'results_open_loop');
+
+fprintf('Open-loop results saved to:\n%s\n', save_folder);
+fprintf('Done.\n');

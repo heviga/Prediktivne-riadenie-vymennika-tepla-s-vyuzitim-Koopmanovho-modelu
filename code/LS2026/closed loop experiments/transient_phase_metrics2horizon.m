@@ -36,7 +36,7 @@ time_format = 'yyyy-MM-dd HH:mm:ss.SSS';
 Q_cost = 10;
 R_cost = 1;
 
-temps = [45, 50, 55, 58, 60, 62, 66, 68];
+temps = [55, 58, 60, 62, 66, 68];
 
 % target used in plots / evaluation
 x_mean_target = 59.0676 + abs(59.0676 - 63.8084);

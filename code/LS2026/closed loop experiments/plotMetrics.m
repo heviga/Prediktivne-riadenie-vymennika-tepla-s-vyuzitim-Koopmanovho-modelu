@@ -1,9 +1,16 @@
 %% Auto-plot + metrics (ONLY T0 >= 55 °C)
 clc; clear; close all;
+% addpath 'C:\Users\ivadu\Desktop\9.semestrik\vymennik\Prediktivne-riadenie-vymennika-tepla-s-vyuzitim-Koopmanovho-modelu\code\LS2026'
 
 set(groot,'defaultTextInterpreter','latex');
 set(groot,'defaultLegendInterpreter','latex');
 set(groot,'defaultAxesTickLabelInterpreter','latex');
+
+%% ===== FONT SIZES =====
+label_fs  = 16;
+title_fs  = 18;
+tick_fs   = 14;
+legend_fs = 13;
 
 %% ===== SCALING CONSTANTS =====
 x_mean = 59.0676;
@@ -47,8 +54,8 @@ for k = 1:length(temps)
 
     fprintf('\n--- Processing start T = %d °C ---\n', T0);
 
-    koop_file   = sprintf('steps/2611runtime_log_koop%d.mat', k);
-    strejc_file = sprintf('steps/2611runtime_log_strejc%d.mat', k);
+    koop_file   = sprintf('../steps/2611runtime_log_koop%d.mat', k);
+    strejc_file = sprintf('../steps/2611runtime_log_strejc%d.mat', k);
 
     %% ===== LOAD KOOPMAN =====
     S = load(koop_file);
@@ -105,8 +112,8 @@ for k = 1:length(temps)
     OBJ_S  = [OBJ_S; obj_strejc];
 
     %% ===== CLOSED-LOOP PLOT PER T0 =====
-    fig = figure('Color','w','Position',[100 100 900 520]);
-    tiledlayout(2,1,'TileSpacing','Compact','Padding','Compact');
+    fig = figure('Color','w','Position',[100 100 1000 650]);
+    tiledlayout(2,1,'TileSpacing','loose','Padding','loose');
 
     % --- OUTPUT ---
     nexttile;
@@ -114,9 +121,17 @@ for k = 1:length(temps)
     plot(step, T4_strejc, 'b--', 'LineWidth', 2);
     yline(target,'k','LineWidth',1.2);
     grid on; grid minor;
-    ylabel('Outlet temperature ($^\circ$C)');
-    title(sprintf('Closed-loop response (start %d$^\\circ$C)', T0));
-    legend('Koopman MPC','Strejc MPC','Reference','Location','best');
+    ylabel('Outlet temperature ($^\circ$C)', 'FontSize', label_fs, 'Interpreter','latex');
+    title(sprintf('Closed-loop response (start %d$^\\circ$C)', T0), ...
+        'FontSize', title_fs, 'Interpreter','latex');
+    lgd1 = legend('Koopman MPC','Linear MPC','Steady-state','Location','best');
+    lgd1.FontSize = legend_fs;
+    lgd1.Interpreter = 'latex';
+
+    ax1 = gca;
+    ax1.FontSize = tick_fs;
+    ax1.TickLabelInterpreter = 'latex';
+
     ylim([min([T4_koop;T4_strejc])-1.5, max([T4_koop;T4_strejc])+1.5]);
 
     % --- INPUT ---
@@ -124,47 +139,67 @@ for k = 1:length(temps)
     plot(step, Pump_koop, 'm', 'LineWidth', 2); hold on;
     plot(step, Pump_strejc, 'b--', 'LineWidth', 2);
     grid on; grid minor;
-    xlabel('Time step');
-    ylabel('Pump speed (\%)');
-    title('Control input');
-    legend('Koopman MPC','Strejc MPC','Location','best');
+    xlabel('Time step', 'FontSize', label_fs, 'Interpreter','latex');
+    ylabel('Pump speed (\%)', 'FontSize', label_fs, 'Interpreter','latex');
+    title('Control input', 'FontSize', title_fs, 'Interpreter','latex');
+    lgd2 = legend('Koopman MPC','Linear MPC','Location','best');
+    lgd2.FontSize = legend_fs;
+    lgd2.Interpreter = 'latex';
 
-    %saveas(fig, sprintf('figs/compare_cl_T0_%d.png', T0));
+    ax2 = gca;
+    ax2.FontSize = tick_fs;
+    ax2.TickLabelInterpreter = 'latex';
+
+    exportgraphics(fig, sprintf('figs/compare_cl_T0_%d.png', T0), 'Resolution', 300);
 end
 
 %% ===== METRICS vs INITIAL CONDITION (T0 >= 55 °C) =====
-figM = figure('Color','w','Position',[100 100 980 360]);
-tiledlayout(1,3,'TileSpacing','Compact','Padding','Compact');
+figM = figure('Color','w','Position',[100 100 1400 450]);
+tiledlayout(1,3,'TileSpacing','loose','Padding','loose');
 
 % RMSE
 nexttile;
 plot(T0_vec, RMSE_K,'m-o','LineWidth',2); hold on;
 plot(T0_vec, RMSE_S,'b-s','LineWidth',2);
 grid on; grid minor;
-xlabel('Initial temperature $T_0$ ($^\circ$C)');
-ylabel('RMSE ($^\circ$C)');
-title('RMSE');
-legend('Koopman','Strejc','Location','best');
+xlabel('Initial temperature $T_0$ ($^\circ$C)', 'FontSize', label_fs, 'Interpreter','latex');
+ylabel('RMSE ($^\circ$C)', 'FontSize', label_fs, 'Interpreter','latex');
+title('RMSE', 'FontSize', title_fs, 'Interpreter','latex');
+lgd = legend('Koopman','Linear','Location','best');
+lgd.FontSize = legend_fs;
+lgd.Interpreter = 'latex';
+ax = gca;
+ax.FontSize = tick_fs;
+ax.TickLabelInterpreter = 'latex';
 
 % IAE
 nexttile;
 plot(T0_vec, IAE_K,'m-o','LineWidth',2); hold on;
 plot(T0_vec, IAE_S,'b-s','LineWidth',2);
 grid on; grid minor;
-xlabel('Initial temperature $T_0$ ($^\circ$C)');
-ylabel('IAE');
-title('IAE');
-legend('Koopman','Strejc','Location','best');
+xlabel('Initial temperature $T_0$ ($^\circ$C)', 'FontSize', label_fs, 'Interpreter','latex');
+ylabel('IAE', 'FontSize', label_fs, 'Interpreter','latex');
+title('IAE', 'FontSize', title_fs, 'Interpreter','latex');
+lgd = legend('Koopman','Linear','Location','best');
+lgd.FontSize = legend_fs;
+lgd.Interpreter = 'latex';
+ax = gca;
+ax.FontSize = tick_fs;
+ax.TickLabelInterpreter = 'latex';
 
 % Objective
 nexttile;
 plot(T0_vec, OBJ_K,'m-o','LineWidth',2); hold on;
 plot(T0_vec, OBJ_S,'b-s','LineWidth',2);
 grid on; grid minor;
-xlabel('Initial temperature $T_0$ ($^\circ$C)');
-ylabel('Objective');
-title('Objective value');
-legend('Koopman','Strejc','Location','best');
+xlabel('Initial temperature $T_0$ ($^\circ$C)', 'FontSize', label_fs, 'Interpreter','latex');
+ylabel('Objective', 'FontSize', label_fs, 'Interpreter','latex');
+title('Objective value', 'FontSize', title_fs, 'Interpreter','latex');
+lgd = legend('Koopman','Linear','Location','best');
+lgd.FontSize = legend_fs;
+lgd.Interpreter = 'latex';
+ax = gca;
+ax.FontSize = tick_fs;
+ax.TickLabelInterpreter = 'latex';
 
-%saveas(figM,'figs/metrics_vs_T0_from55.png');
-
+ exportgraphics(figM,'figs/metrics_vs_T0_from55.png','Resolution',300);

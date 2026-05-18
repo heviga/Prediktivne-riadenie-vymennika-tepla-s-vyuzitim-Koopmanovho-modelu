@@ -1,5 +1,5 @@
 %% Auto-plot + transient metrics for selected start temperatures
-% Only settling-based transient metrics
+% Settling-based transient metrics + transient objective function
 clc; clear; close all;
 
 project_root = 'C:\Users\ivadu\Desktop\9.semestrik\vymennik\Prediktivne-riadenie-vymennika-tepla-s-vyuzitim-Koopmanovho-modelu\code\LS2026';
@@ -23,7 +23,10 @@ if ~exist(res_dir, 'dir')
 end
 
 %% ===== SCALING CONSTANTS =====
-u_mean = 65.8447; %#ok<NASGU>
+x_mean = 59.0676;
+x_std  = 6.9122;
+u_mean = 65.8447;
+u_std  = 22.9062;
 
 %% ===== SETTINGS =====
 time_format = 'yyyy-MM-dd HH:mm:ss.SSS';
@@ -34,28 +37,34 @@ file_ids = [3, 4, 5, 6, 7, 8];   % original file numbering
 % target used in plots / evaluation
 target = 59.0676 + abs(59.0676 - 63.8084);
 
+Q_cost = 10;
+R_cost = 1;
+
 %% ===== TRANSIENT SETTINGS =====
 settling_band = 0.4;   % +/- band around target
-min_hold      = 5;    % must stay inside for at least 10 samples
+min_hold      = 5;     % must stay inside for at least 5 samples
 
 %% ===== GLOBAL ACCUMULATORS (TRANSIENT ONLY) =====
 sum_ts_koop_all        = 0;
-sum_ts_strejc_all      = 0;
+sum_ts_linear_all      = 0;
 
 sum_iae_tr_koop_all    = 0;
-sum_iae_tr_strejc_all  = 0;
+sum_iae_tr_linear_all  = 0;
 
 sum_ise_tr_koop_all    = 0;
-sum_ise_tr_strejc_all  = 0;
+sum_ise_tr_linear_all  = 0;
 
 sum_itae_tr_koop_all   = 0;
-sum_itae_tr_strejc_all = 0;
+sum_itae_tr_linear_all = 0;
 
 sum_rmse_tr_koop_all   = 0;
-sum_rmse_tr_strejc_all = 0;
+sum_rmse_tr_linear_all = 0;
 
 sum_uenergy_koop_all   = 0;
-sum_uenergy_strejc_all = 0;
+sum_uenergy_linear_all = 0;
+
+sum_jcl_koop_all       = 0;
+sum_jcl_linear_all     = 0;
 
 %% ===== TABLE STORAGE =====
 all_rows = [];
@@ -71,7 +80,7 @@ for k = 1:length(temps)
     fprintf('====================================================\n');
 
     koop_file   = sprintf('steps/2611runtime_log_koop%d.mat', fid);
-    strejc_file = sprintf('steps/2611runtime_log_strejc%d.mat', fid);
+    linear_file = sprintf('steps/2611runtime_log_strejc%d.mat', fid);
 
     %% ===== LOAD KOOPMAN =====
     S = load(koop_file);
@@ -82,22 +91,22 @@ for k = 1:length(temps)
     T4_koop   = log_data.T4(:);
     Pump_koop = log_data.Pump2(:);
 
-    %% ===== LOAD STREJC =====
-    S = load(strejc_file);
+    %% ===== LOAD LINEAR MODEL =====
+    S = load(linear_file);
     log_data = S.log_data;
 
     t = datetime(string(log_data.timestamp), 'InputFormat', time_format);
-    time_strejc = seconds(t - t(1)); %#ok<NASGU>
-    T4_strejc   = log_data.T4(:);
-    Pump_strejc = log_data.Pump2(:);
+    time_linear = seconds(t - t(1)); %#ok<NASGU>
+    T4_linear   = log_data.T4(:);
+    Pump_linear = log_data.Pump2(:);
 
     %% ===== ALIGN LENGTHS =====
-    L = min([length(T4_koop), length(T4_strejc), length(Pump_koop), length(Pump_strejc)]);
+    L = min([length(T4_koop), length(T4_linear), length(Pump_koop), length(Pump_linear)]);
 
     T4_koop     = T4_koop(1:L);
-    T4_strejc   = T4_strejc(1:L);
+    T4_linear   = T4_linear(1:L);
     Pump_koop   = Pump_koop(1:L);
-    Pump_strejc = Pump_strejc(1:L);
+    Pump_linear = Pump_linear(1:L);
 
     step = (0:L-1)';
 
@@ -126,49 +135,64 @@ for k = 1:length(temps)
     koop_rmse           = sqrt(mean(e_tr_koop.^2));
     koop_u_energy       = sum(u_tr_koop.^2);
 
-    %% ===== TRANSIENT METRICS: STREJC =====
-    e_strejc      = T4_strejc - target;
-    abs_e_strejc  = abs(e_strejc);
-    inside_strejc = abs_e_strejc <= settling_band;
+    %% ===== TRANSIENT METRICS: LINEAR MODEL =====
+    e_linear      = T4_linear - target;
+    abs_e_linear  = abs(e_linear);
+    inside_linear = abs_e_linear <= settling_band;
 
-    ts_idx_strejc = L;   % fallback if never settles
+    ts_idx_linear = L;   % fallback if never settles
     for i = 1:(L - min_hold + 1)
-        if all(inside_strejc(i:i+min_hold-1))
-            ts_idx_strejc = i;
+        if all(inside_linear(i:i+min_hold-1))
+            ts_idx_linear = i;
             break;
         end
     end
 
-    idx_tr_strejc = 1:ts_idx_strejc;
-    e_tr_strejc   = e_strejc(idx_tr_strejc);
-    u_tr_strejc   = Pump_strejc(idx_tr_strejc);
+    idx_tr_linear = 1:ts_idx_linear;
+    e_tr_linear   = e_linear(idx_tr_linear);
+    u_tr_linear   = Pump_linear(idx_tr_linear);
 
-    strejc_settling_index = ts_idx_strejc;
-    strejc_settling_time  = ts_idx_strejc - 1;
-    strejc_iae            = sum(abs(e_tr_strejc));
-    strejc_ise            = sum(e_tr_strejc.^2);
-    strejc_itae           = sum((0:length(e_tr_strejc)-1)' .* abs(e_tr_strejc));
-    strejc_rmse           = sqrt(mean(e_tr_strejc.^2));
-    strejc_u_energy       = sum(u_tr_strejc.^2);
+    linear_settling_index = ts_idx_linear;
+    linear_settling_time  = ts_idx_linear - 1;
+    linear_iae            = sum(abs(e_tr_linear));
+    linear_ise            = sum(e_tr_linear.^2);
+    linear_itae           = sum((0:length(e_tr_linear)-1)' .* abs(e_tr_linear));
+    linear_rmse           = sqrt(mean(e_tr_linear.^2));
+    linear_u_energy       = sum(u_tr_linear.^2);
+
+    %% ===== TRANSIENT OBJECTIVE FUNCTION =====
+    % scaled objective over transient interval only
+    bias = target - x_mean;
+
+    koop_jcl = sum( ...
+        Q_cost * ((T4_koop(idx_tr_koop) - bias - x_mean) / x_std).^2 + ...
+        R_cost * ((Pump_koop(idx_tr_koop) - u_mean) / u_std).^2 );
+
+    linear_jcl = sum( ...
+        Q_cost * ((T4_linear(idx_tr_linear) - bias - x_mean) / x_std).^2 + ...
+        R_cost * ((Pump_linear(idx_tr_linear) - u_mean) / u_std).^2 );
 
     %% ===== ACCUMULATE TRANSIENT SUMS =====
     sum_ts_koop_all        = sum_ts_koop_all        + koop_settling_time;
-    sum_ts_strejc_all      = sum_ts_strejc_all      + strejc_settling_time;
+    sum_ts_linear_all      = sum_ts_linear_all      + linear_settling_time;
 
     sum_iae_tr_koop_all    = sum_iae_tr_koop_all    + koop_iae;
-    sum_iae_tr_strejc_all  = sum_iae_tr_strejc_all  + strejc_iae;
+    sum_iae_tr_linear_all  = sum_iae_tr_linear_all  + linear_iae;
 
     sum_ise_tr_koop_all    = sum_ise_tr_koop_all    + koop_ise;
-    sum_ise_tr_strejc_all  = sum_ise_tr_strejc_all  + strejc_ise;
+    sum_ise_tr_linear_all  = sum_ise_tr_linear_all  + linear_ise;
 
     sum_itae_tr_koop_all   = sum_itae_tr_koop_all   + koop_itae;
-    sum_itae_tr_strejc_all = sum_itae_tr_strejc_all + strejc_itae;
+    sum_itae_tr_linear_all = sum_itae_tr_linear_all + linear_itae;
 
     sum_rmse_tr_koop_all   = sum_rmse_tr_koop_all   + koop_rmse;
-    sum_rmse_tr_strejc_all = sum_rmse_tr_strejc_all + strejc_rmse;
+    sum_rmse_tr_linear_all = sum_rmse_tr_linear_all + linear_rmse;
 
     sum_uenergy_koop_all   = sum_uenergy_koop_all   + koop_u_energy;
-    sum_uenergy_strejc_all = sum_uenergy_strejc_all + strejc_u_energy;
+    sum_uenergy_linear_all = sum_uenergy_linear_all + linear_u_energy;
+
+    sum_jcl_koop_all       = sum_jcl_koop_all       + koop_jcl;
+    sum_jcl_linear_all     = sum_jcl_linear_all     + linear_jcl;
 
     %% ===== PRINT PER-T0 SUMMARY =====
     fprintf('Koopman transient metrics:\n');
@@ -178,83 +202,102 @@ for k = 1:length(temps)
     fprintf('  ISE            = %.3f\n', koop_ise);
     fprintf('  ITAE           = %.3f\n', koop_itae);
     fprintf('  Control energy = %.3f\n', koop_u_energy);
+    fprintf('  Objective Jcl  = %.3f\n', koop_jcl);
 
-    fprintf('Strejc transient metrics:\n');
-    fprintf('  Settling time  = %d samples\n', strejc_settling_time);
-    fprintf('  RMSE           = %.3f\n', strejc_rmse);
-    fprintf('  IAE            = %.3f\n', strejc_iae);
-    fprintf('  ISE            = %.3f\n', strejc_ise);
-    fprintf('  ITAE           = %.3f\n', strejc_itae);
-    fprintf('  Control energy = %.3f\n', strejc_u_energy);
+    fprintf('Linear transient metrics:\n');
+    fprintf('  Settling time  = %d samples\n', linear_settling_time);
+    fprintf('  RMSE           = %.3f\n', linear_rmse);
+    fprintf('  IAE            = %.3f\n', linear_iae);
+    fprintf('  ISE            = %.3f\n', linear_ise);
+    fprintf('  ITAE           = %.3f\n', linear_itae);
+    fprintf('  Control energy = %.3f\n', linear_u_energy);
+    fprintf('  Objective Jcl  = %.3f\n', linear_jcl);
 
     %% ===== STORE INTO TABLE =====
     all_rows = [all_rows; ...
         table(T0, "Koopman", ...
               koop_settling_time, koop_settling_index, ...
-              koop_rmse, koop_iae, koop_ise, koop_itae, koop_u_energy, ...
+              koop_rmse, koop_iae, koop_ise, koop_itae, ...
+              koop_u_energy, koop_jcl, ...
               'VariableNames', {'T0','Controller', ...
               'SettlingTime','SettlingIndex', ...
-              'RMSE_Transient','IAE_Transient','ISE_Transient','ITAE_Transient','ControlEnergy_Transient'}); ...
-        table(T0, "Strejc", ...
-              strejc_settling_time, strejc_settling_index, ...
-              strejc_rmse, strejc_iae, strejc_ise, strejc_itae, strejc_u_energy, ...
+              'RMSE_Transient','IAE_Transient','ISE_Transient','ITAE_Transient', ...
+              'ControlEnergy_Transient','Jcl_Transient'}); ...
+        table(T0, "Linear", ...
+              linear_settling_time, linear_settling_index, ...
+              linear_rmse, linear_iae, linear_ise, linear_itae, ...
+              linear_u_energy, linear_jcl, ...
               'VariableNames', {'T0','Controller', ...
               'SettlingTime','SettlingIndex', ...
-              'RMSE_Transient','IAE_Transient','ISE_Transient','ITAE_Transient','ControlEnergy_Transient'})];
+              'RMSE_Transient','IAE_Transient','ISE_Transient','ITAE_Transient', ...
+              'ControlEnergy_Transient','Jcl_Transient'})];
 
-    %% ===== PLOT =====
-    figure('Color','w','Position',[100 100 900 520]);
-    tiledlayout(2,1,'TileSpacing','Compact','Padding','Compact');
+   %% ===== PLOT =====
+figure('Color','w');
+tiledlayout(2,1,'TileSpacing','Compact','Padding','Compact');
 
-    % --- OUTPUT ---
-    nexttile;
-    h1 = plot(step, T4_koop, 'm', 'LineWidth', 2); hold on;
-    h2 = plot(step, T4_strejc, 'b--', 'LineWidth', 2);
-    h3 = yline(target, 'k-', 'LineWidth', 1.2);
+label_fs = 12;   % nazvy osi
+title_fs = 12;   % nazov grafu
+tick_fs  = 8;   % cisla na osiach
 
-    yline(target + settling_band, 'k:', 'LineWidth', 0.8, 'HandleVisibility','off');
-    yline(target - settling_band, 'k:', 'LineWidth', 0.8, 'HandleVisibility','off');
+% --- OUTPUT ---
+nexttile;
+h1 = plot(step, T4_koop, 'm', 'LineWidth', 1.5); hold on;
+h2 = plot(step, T4_linear, 'b--', 'LineWidth', 1.5);
+h3 = yline(target, 'k-', 'LineWidth', 1.2);
 
-    xline(ts_idx_koop-1, 'm:', 'LineWidth', 1.2, 'HandleVisibility','off');
-    xline(ts_idx_strejc-1, 'b:', 'LineWidth', 1.2, 'HandleVisibility','off');
+yline(target + settling_band, 'k:', 'LineWidth', 0.8, 'HandleVisibility','off');
+yline(target - settling_band, 'k:', 'LineWidth', 0.8, 'HandleVisibility','off');
 
-    grid on; grid minor;
-    ylabel('Outlet temperature ($^\circ$C)');
-    title(sprintf('Closed-loop response (start %d$^\\circ$C)', T0));
-    legend([h1 h2 h3], {'Koopman MPC','Linear MPC','Target'}, 'Location','best');
+xline(ts_idx_koop-1, 'm:', 'LineWidth', 1.2, 'HandleVisibility','off');
+xline(ts_idx_linear-1, 'b:', 'LineWidth', 1.2, 'HandleVisibility','off');
 
-    ylim([min([T4_koop; T4_strejc; target])-1, max([T4_koop; T4_strejc; target])+1]);
+grid on; grid minor;
+ylabel('Outlet temperature ($^\circ$C)', 'FontSize', label_fs);
+title(sprintf('Closed-loop response (start %d$^\\circ$C)', T0), 'FontSize', title_fs);
+legend([h1 h2 h3], {'Koopman MPC','Linear MPC','Target'}, 'Location','best');
 
-    % --- INPUT ---
-    nexttile;
-    h4 = stairs(step, Pump_koop, 'm', 'LineWidth', 2); hold on;
-    h5 = stairs(step, Pump_strejc, 'b--', 'LineWidth', 2);
+ax1 = gca;
+ax1.FontSize = tick_fs;
 
-    xline(ts_idx_koop-1, 'm:', 'LineWidth', 1.2, 'HandleVisibility','off');
-    xline(ts_idx_strejc-1, 'b:', 'LineWidth', 1.2, 'HandleVisibility','off');
+ylim([min([T4_koop; T4_linear; target])-1, max([T4_koop; T4_linear; target])+1]);
 
-    grid on; grid minor;
-    xlabel('Time step');
-    ylabel('Pump speed (\%)');
-    title('Control input');
-    legend([h4 h5], {'Koopman MPC','Linear MPC'}, 'Location','best');
+% --- INPUT ---
+nexttile;
+h4 = stairs(step, Pump_koop, 'm', 'LineWidth', 1.5); hold on;
+h5 = stairs(step, Pump_linear, 'b--', 'LineWidth', 1.5);
 
-    out_png = fullfile(fig_dir, sprintf('compare_cl_T0_%d.png', T0));
-    saveas(gcf, out_png);
+xline(ts_idx_koop-1, 'm:', 'LineWidth', 1.2, 'HandleVisibility','off');
+xline(ts_idx_linear-1, 'b:', 'LineWidth', 1.2, 'HandleVisibility','off');
+
+grid on; grid minor;
+xlabel('Time step', 'FontSize', label_fs);
+ylabel('Pump speed (\%)', 'FontSize', label_fs);
+title('Control input', 'FontSize', title_fs);
+legend([h4 h5], {'Koopman MPC','Linear MPC'}, 'Location','best');
+ylim([60 101.5])
+
+ax2 = gca;
+ax2.FontSize = tick_fs;
+
+out_png = fullfile(fig_dir, sprintf('compare_cl_T0_%d.png', T0));
+saveas(gcf, out_png);
 end
 
 %% ===== FINAL SUM TABLE (TRANSIENT ONLY) =====
 metrics_sum = table( ...
-    {'Koopman'; 'Strejc'}, ...
-    [sum_ts_koop_all; sum_ts_strejc_all], ...
-    [sum_rmse_tr_koop_all; sum_rmse_tr_strejc_all], ...
-    [sum_iae_tr_koop_all; sum_iae_tr_strejc_all], ...
-    [sum_ise_tr_koop_all; sum_ise_tr_strejc_all], ...
-    [sum_itae_tr_koop_all; sum_itae_tr_strejc_all], ...
-    [sum_uenergy_koop_all; sum_uenergy_strejc_all], ...
+    {'Koopman'; 'Linear'}, ...
+    [sum_ts_koop_all; sum_ts_linear_all], ...
+    [sum_rmse_tr_koop_all; sum_rmse_tr_linear_all], ...
+    [sum_iae_tr_koop_all; sum_iae_tr_linear_all], ...
+    [sum_ise_tr_koop_all; sum_ise_tr_linear_all], ...
+    [sum_itae_tr_koop_all; sum_itae_tr_linear_all], ...
+    [sum_uenergy_koop_all; sum_uenergy_linear_all], ...
+    [sum_jcl_koop_all; sum_jcl_linear_all], ...
     'VariableNames', {'Controller', ...
     'Sum_SettlingTime','Sum_RMSE_Transient','Sum_IAE_Transient', ...
-    'Sum_ISE_Transient','Sum_ITAE_Transient','Sum_ControlEnergy_Transient'});
+    'Sum_ISE_Transient','Sum_ITAE_Transient','Sum_ControlEnergy_Transient', ...
+    'Sum_Jcl_Transient'});
 
 %% ===== FINAL MEAN TABLE (TRANSIENT ONLY) =====
 n_cases = length(temps);
@@ -280,3 +323,137 @@ disp('Saved:');
 disp(' - results/per_T0_transient_metrics.csv');
 disp(' - results/transient_metrics_sum.csv');
 disp(' - results/transient_metrics_mean.csv');
+
+
+%% ===== SUMMARY PLOTS OF TRANSIENT METRICS VS INITIAL TEMPERATURE =====
+% Split into two figures so fonts remain readable in LaTeX
+
+% --- prepare data from all_rows table ---
+koop_rows   = strcmp(all_rows.Controller, "Koopman");
+linear_rows = strcmp(all_rows.Controller, "Linear");
+
+koop_tbl   = sortrows(all_rows(koop_rows, :), 'T0');
+linear_tbl = sortrows(all_rows(linear_rows, :), 'T0');
+
+T0_plot = koop_tbl.T0;
+
+Ts_koop   = koop_tbl.SettlingTime;
+Ts_linear = linear_tbl.SettlingTime;
+
+IAE_koop   = koop_tbl.IAE_Transient;
+IAE_linear = linear_tbl.IAE_Transient;
+
+ISE_koop   = koop_tbl.ISE_Transient;
+ISE_linear = linear_tbl.ISE_Transient;
+
+ITAE_koop   = koop_tbl.ITAE_Transient;
+ITAE_linear = linear_tbl.ITAE_Transient;
+
+Jcl_koop   = koop_tbl.Jcl_Transient;
+Jcl_linear = linear_tbl.Jcl_Transient;
+
+% --- style ---
+label_fs  = 22;
+title_fs  = 22;
+tick_fs   = 12;
+legend_fs = 12;
+
+lw = 2.2;
+ms = 8;
+
+%% ===== FIGURE 1: Ts, IAE, ISE =====
+fig_sum1 = figure('Color','w','Position',[100 100 1500 500]);
+tiledlayout(1,3,'TileSpacing','compact','Padding','compact');
+
+% Settling time
+nexttile;
+plot(T0_plot, Ts_koop,   'm-o', 'LineWidth', lw, 'MarkerSize', ms); hold on;
+plot(T0_plot, Ts_linear, 'b-s', 'LineWidth', lw, 'MarkerSize', ms);
+grid on; box on; grid minor;
+xlim([55 max(T0_plot)]);
+
+ax = gca;
+ax.FontSize = tick_fs;
+
+title('Settling time', 'FontSize', title_fs, 'Interpreter','latex');
+xlabel('Initial temperature $T_0$ ($^\circ$C)', 'FontSize', label_fs, 'Interpreter','latex');
+ylabel('$T_s$ (samples)', 'FontSize', label_fs, 'Interpreter','latex');
+legend('Koopman','Linear','Location','northeast','FontSize',legend_fs,'Interpreter','latex');
+
+% IAE
+nexttile;
+plot(T0_plot, IAE_koop,   'm-o', 'LineWidth', lw, 'MarkerSize', ms); hold on;
+plot(T0_plot, IAE_linear, 'b-s', 'LineWidth', lw, 'MarkerSize', ms);
+grid on; box on; grid minor;
+xlim([55 max(T0_plot)]);
+
+ax = gca;
+ax.FontSize = tick_fs;
+
+title('IAE', 'FontSize', title_fs, 'Interpreter','latex');
+xlabel('Initial temperature $T_0$ ($^\circ$C)', 'FontSize', label_fs, 'Interpreter','latex');
+ylabel('IAE', 'FontSize', label_fs, 'Interpreter','latex');
+legend('Koopman','Linear','Location','northeast','FontSize',legend_fs,'Interpreter','latex');
+
+% ISE
+nexttile;
+plot(T0_plot, ISE_koop,   'm-o', 'LineWidth', lw, 'MarkerSize', ms); hold on;
+plot(T0_plot, ISE_linear, 'b-s', 'LineWidth', lw, 'MarkerSize', ms);
+grid on; box on; grid minor;
+xlim([55 max(T0_plot)]);
+
+ax = gca;
+ax.FontSize = tick_fs;
+
+title('ISE', 'FontSize', title_fs, 'Interpreter','latex');
+xlabel('Initial temperature $T_0$ ($^\circ$C)', 'FontSize', label_fs, 'Interpreter','latex');
+ylabel('ISE', 'FontSize', label_fs, 'Interpreter','latex');
+legend('Koopman','Linear','Location','northeast','FontSize',legend_fs,'Interpreter','latex');
+
+out_pdf1 = fullfile(fig_dir, 'transient_metrics_summary_1.pdf');
+out_png1 = fullfile(fig_dir, 'transient_metrics_summary_1.png');
+
+exportgraphics(fig_sum1, out_pdf1, 'ContentType','vector');
+exportgraphics(fig_sum1, out_png1, 'Resolution', 300);
+
+%% ===== FIGURE 2: ITAE, JCL =====
+% Same overall width as Figure 1, but two plots are centered.
+
+fig_sum2 = figure('Color','w','Position',[100 100 1500 500]);
+tiledlayout(1,6,'TileSpacing','compact','Padding','compact');
+
+% ITAE
+nexttile(2,[1 2]);
+plot(T0_plot, ITAE_koop,   'm-o', 'LineWidth', lw, 'MarkerSize', ms); hold on;
+plot(T0_plot, ITAE_linear, 'b-s', 'LineWidth', lw, 'MarkerSize', ms);
+grid on; box on; grid minor;
+xlim([55 max(T0_plot)]);
+
+ax = gca;
+ax.FontSize = tick_fs;
+
+title('ITAE', 'FontSize', title_fs, 'Interpreter','latex');
+xlabel('Initial temperature $T_0$ ($^\circ$C)', 'FontSize', label_fs, 'Interpreter','latex');
+ylabel('ITAE', 'FontSize', label_fs, 'Interpreter','latex');
+legend('Koopman','Linear','Location','northeast','FontSize',legend_fs,'Interpreter','latex');
+
+% Objective value
+nexttile(4,[1 2]);
+plot(T0_plot, Jcl_koop,   'm-o', 'LineWidth', lw, 'MarkerSize', ms); hold on;
+plot(T0_plot, Jcl_linear, 'b-s', 'LineWidth', lw, 'MarkerSize', ms);
+grid on; box on; grid minor;
+xlim([55 max(T0_plot)]);
+
+ax = gca;
+ax.FontSize = tick_fs;
+
+title('Objective value', 'FontSize', title_fs, 'Interpreter','latex');
+xlabel('Initial temperature $T_0$ ($^\circ$C)', 'FontSize', label_fs, 'Interpreter','latex');
+ylabel('$J_{\mathrm{CL}}$', 'FontSize', label_fs, 'Interpreter','latex');
+legend('Koopman','Linear','Location','northeast','FontSize',legend_fs,'Interpreter','latex');
+
+out_pdf2 = fullfile(fig_dir, 'transient_metrics_summary_2.pdf');
+out_png2 = fullfile(fig_dir, 'transient_metrics_summary_2.png');
+
+exportgraphics(fig_sum2, out_pdf2, 'ContentType','vector');
+exportgraphics(fig_sum2, out_png2, 'Resolution', 300);

@@ -1,31 +1,33 @@
 clc; clear all; close all;
+
 set(groot, 'defaultTextInterpreter', 'latex');
-set(groot, 'defaultLegendInterpreter', 'latex');
+set(groot, 'defaultLegendInterpreter', ...
+    'latex');
 set(groot, 'defaultAxesTickLabelInterpreter', 'latex');
-% 
+
+label_fs  = 16;
+title_fs  = 18;
+tick_fs   = 14;
+legend_fs = 13;
+
 project_root = 'C:\Users\ivadu\Desktop\9.semestrik\vymennik\Prediktivne-riadenie-vymennika-tepla-s-vyuzitim-Koopmanovho-modelu\code';
 addpath(genpath(project_root));
 addpath('../');
 
 %% ===== PYTHON BASELINE =====
-% pyenv('Version', '/Users/patrik/miniconda3/envs/kmpc/bin/python');
-
 pyenv('Version', 'C:\Users\ivadu\AppData\Local\Programs\Python\Python39\python.exe');
-p = 'C:\Users\ivadu\Desktop\9.semestrik\vymennik\Prediktivne-riadenie-vymennika-tepla-s-vyuzitim-Koopmanovho-modelu\code\LS2026\closed loop simulations';
+p = 'C:\Users\ivadu\Desktop\9.semestrik\vymennik\Prediktivne-rimeadenie-vymennika-tepla-s-vyuzitim-Koopmanovho-modelu\code\LS2026\closed loop simulations';
 
-
-% p = '/Users/patrik/Documents/Skola/Pedagogika/Prediktivne-riadenie-vymennika-tepla-s-vyuzitim-Koopmanovho-modelu/code/LS2026/closed loop simulations';
 paths = cell(py.sys.path);
 if ~any(strcmp(paths, p))
     insert(py.sys.path, int32(0), p);
 end
 
-py.baseline_inference.init();   % or mod = py.importlib.import_module('baseline_inference'); mod.init();
+py.baseline_inference.init();
 
-
-%%
+%% ===== BASELINE STEADY STATE =====
 py.baseline_inference.get_x([0])
-for i =1:1000
+for i = 1:1000
     steady_state = py.baseline_inference.y_plus([0]);
 end
 steady_state
@@ -156,7 +158,7 @@ for i = 1:length(y0_vals_scaled)
     x_est_k(:,1) = x0_k_init;
     yk(:,1) = C_k * x0_k_init;
     y_true_k(:,1) = yk(:,1);
-    y_meas_k(:,1) = y_true_k(:,1);% + meas_noise_std * randn(1,1);
+    y_meas_k(:,1) = y_true_k(:,1);
 
     for t = 1:sim_length
         try
@@ -176,7 +178,7 @@ for i = 1:length(y0_vals_scaled)
 
         try
             y_baseline = py.baseline_inference.y_plus(uk(:,t));
-            y_true_k(:,t+1) = double(y_baseline.item())-steady_state;
+            y_true_k(:,t+1) = double(y_baseline.item()) - steady_state;
 
             if isnan(y_true_k(:,t+1))
                 fprintf('Warning: NaN baseline output at t=%d, IC=%d\n', t, i);
@@ -187,7 +189,7 @@ for i = 1:length(y0_vals_scaled)
             y_true_k(:,t+1) = y_true_k(:,t);
         end
 
-        y_meas_k(:,t+1) = y_true_k(:,t+1); %+ meas_noise_std * randn(1,1);
+        y_meas_k(:,t+1) = y_true_k(:,t+1);
 
         x_pred = A_k * x_est_k(:,t) + B_k * uk(:,t);
         P_pred = A_k * P_k * A_k' + Q_KF;
@@ -230,7 +232,7 @@ for i = 1:length(y0_vals_scaled)
     x_est_s(:,1) = y0_scaled;
     ys(:,1) = C_s * xs(:,1);
     y_true_s(:,1) = ys(:,1);
-    y_meas_s(:,1) = y_true_s(:,1);% + meas_noise_std * randn(1,1);
+    y_meas_s(:,1) = y_true_s(:,1);
 
     for t = 1:sim_length
         try
@@ -250,7 +252,7 @@ for i = 1:length(y0_vals_scaled)
 
         try
             y_baseline = py.baseline_inference.y_plus(us(:,t));
-            y_true_s(:,t+1) = double(y_baseline.item())-steady_state;
+            y_true_s(:,t+1) = double(y_baseline.item()) - steady_state;
 
             if isnan(y_true_s(:,t+1))
                 fprintf('Warning: NaN baseline output at t=%d, IC=%d\n', t, i);
@@ -261,7 +263,7 @@ for i = 1:length(y0_vals_scaled)
             y_true_s(:,t+1) = y_true_s(:,t);
         end
 
-        y_meas_s(:,t+1) = y_true_s(:,t+1); %+ meas_noise_std * randn(1,1);
+        y_meas_s(:,t+1) = y_true_s(:,t+1);
 
         x_pred = A_s * x_est_s(:,t) + B_s * us(:,t);
         P_pred = A_s * P_s * A_s' + Q_kalman;
@@ -323,27 +325,35 @@ for i = 1:length(y0_vals_scaled)
     tY = 0:sim_length;
     tU = 0:sim_length-1;
 
-    figure('Name', sprintf('IC_%02d_y0_%.2f', i, y0_vals(i)), ...
-           'Color','w','Position',[100 100 900 520]);
+    fig_ic = figure('Name', sprintf('IC_%02d_y0_%.2f', i, y0_vals(i)), ...
+                    'Color','w','Position',[100 100 900 520]);
 
     tiledlayout(2,1,'TileSpacing','Compact','Padding','Compact');
 
     nexttile;
-    plot(tY, yk_desc, 'm', 'LineWidth', 2); hold on;
-    plot(tY, ys_desc, 'b--', 'LineWidth', 2);
+    plot(tY, yk_desc, 'm', 'LineWidth', 1.5); hold on;
+    plot(tY, ys_desc, 'b--', 'LineWidth', 1.5);
     yline(x_mean, 'k', 'LineWidth', 1.2);
     grid on; grid minor;
-    ylabel('Outlet temperature ($^\circ$C)');
-    title(sprintf('Closed-loop response for $y_0 = %.2f\\,^\\circ$C', y0_vals(i)));
-    legend('Koopman MPC','Strejc MPC','Steady-state','Location','best');
+    ylabel('Outlet temperature ($^\circ$C)', 'FontSize', label_fs);
+    title(sprintf('Closed-loop response for $y_0 = %.2f\\,^\\circ$C', y0_vals(i)), ...
+          'FontSize', title_fs);
+    lgd1 = legend('Koopman MPC','Linear MPC','Steady-state','Location','best');
+    lgd1.FontSize = legend_fs;
+    ax1 = gca;
+    ax1.FontSize = tick_fs;
 
     nexttile;
-    plot(tU, uk_desc, 'm', 'LineWidth', 2); hold on;
-    plot(tU, us_desc, 'b--', 'LineWidth', 2);
+    plot(tU, uk_desc, 'm', 'LineWidth', 1.5); hold on;
+    plot(tU, us_desc, 'b--', 'LineWidth', 1.5);
     grid on; grid minor;
-    xlabel('Time step');
-    ylabel('Pump speed (\%)');
-    legend('Koopman MPC','Strejc MPC','Location','best');
+    xlabel('Time step', 'FontSize', label_fs);
+    ylabel('Pump speed (\%)', 'FontSize', label_fs);
+    title('Control input', 'FontSize', title_fs);
+    lgd2 = legend('Koopman MPC','Linear MPC','Location','best');
+    lgd2.FontSize = legend_fs;
+    ax2 = gca;
+    ax2.FontSize = tick_fs;
 end
 
 %% ===== RESULTS PRINT =====
@@ -365,24 +375,30 @@ end
 metric_names = {'IAE', 'RMSE', 'Objective function'};
 metric_idx = [3, 5, 6];
 
-figure('Name','Summary metrics','Position',[100 100 1200 400],'Color','w');
+fig_sum = figure('Name','Summary metrics','Position',[100 100 1200 400],'Color','w');
 
 for i = 1:3
     subplot(1,3,i)
-    plot(y0_vals, results_koopman(:,metric_idx(i)), 'm-o','LineWidth',2); hold on;
-    plot(y0_vals, results_strejc(:,metric_idx(i)), 'b-s','LineWidth',2);
-    xlabel('Initial condition $y_0$ ($^\circ$C)');
+    plot(y0_vals, results_koopman(:,metric_idx(i)), 'm-o', 'LineWidth', 1.5); hold on;
+    plot(y0_vals, results_strejc(:,metric_idx(i)), 'b-s', 'LineWidth', 1.5);
+
+    xlabel('Initial condition $y_0$ ($^\circ$C)', 'FontSize', label_fs);
 
     if i == 1
-        ylabel('IAE');
+        ylabel('IAE', 'FontSize', label_fs);
     elseif i == 2
-        ylabel('RMSE ($^\circ$C)');
+        ylabel('RMSE ($^\circ$C)', 'FontSize', label_fs);
     else
-        ylabel('Objective function');
+        ylabel('Objective function', 'FontSize', label_fs);
     end
 
-    title(metric_names{i});
-    legend('Koopman','Linear model','Location','best');
+    title(metric_names{i}, 'FontSize', title_fs);
+    lgd = legend('Koopman MPC','Linear MPC','Location','northeast');
+    lgd.FontSize = legend_fs;
+
+    ax = gca;
+    ax.FontSize = tick_fs;
+
     grid on; grid minor;
 end
 
@@ -460,6 +476,7 @@ save(fullfile(save_folder, 'closed_loop_results.mat'), 'results');
 
 fprintf('Results saved to:\n%s\n', save_folder);
 fprintf('Done.\n');
+
 %% ===== OPTIONAL SAVE =====
 % save('results_fixedIC_ws2025.mat', ...
 %     'results_koopman', 'results_strejc', 'y0_vals', ...

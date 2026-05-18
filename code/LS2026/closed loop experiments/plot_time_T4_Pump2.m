@@ -49,7 +49,7 @@ plot(time_strejc, T4_strejc, 'LineWidth', 1.3);
 grid on;
 ylabel('T4 [°C]');
 title('Measured Temperature');
-legend({'Koopman','Strejc'}, 'Location','southeast');
+legend({'Koopman','Linear'}, 'Location','southeast');
 
 nexttile;
 plot(time_koop, Pump_koop, 'LineWidth', 1.3);
@@ -59,9 +59,9 @@ grid on;
 ylabel('Pump2 [%]');
 xlabel('Elapsed time [min]');
 title('Pump2 Actuation');
-legend({'Koopman','Strejc'}, 'Location','southeast');
+legend({'Koopman','Linear'}, 'Location','southeast');
 
-sgtitle('Koopman vs Strejc control logs');
+sgtitle('Koopman vs linear control logs');
 
 %% Metrics
 target_koop = x_mean_target;

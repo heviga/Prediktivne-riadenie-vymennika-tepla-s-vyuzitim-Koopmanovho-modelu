@@ -134,7 +134,7 @@ for k = 1:length(temps)
     grid on; grid minor;
     ylabel('Outlet temperature ($^\circ$C)');
     title(sprintf('Closed-loop response (start %d$^\\circ$C)', T0));
-    legend('Koopman MPC','Strejc MPC','Steady-state','Location','best');
+    legend('Koopman MPC','Linear MPC','Steady-state','Location','best');
     ylim([min([T4_koop;T4_strejc;target])-1, max([T4_koop;T4_strejc;target])+1]);
 
     % --- INPUT ---
@@ -145,8 +145,8 @@ for k = 1:length(temps)
     xlabel('Time step');
     ylabel('Pump speed (\%)');
     title('Control input');
-    legend('Koopman MPC','Strejc MPC','Location','best');
-
+    legend('Koopman MPC','Linear MPC','Location','best');
+    ylim([50 101])
     % small text with metrics on the plot (optional)
 %     annotation(fig,'textbox',[0.12 0.01 0.86 0.06], ...
 %         'String', sprintf('Koopman: RMSE=%.3f, IAE=%.1f, ObjS=%.2f   |   Strejc: RMSE=%.3f, IAE=%.1f, ObjS=%.2f', ...
